@@ -15,5 +15,6 @@ dependencies:
   - openpyxl
   - pingouin
   - rpy2=3.5.1
-  - r-lavaan
+  - r-mass
+  - r-matrix
 prefix: /Users/zeleninam2/miniconda3/envs/env_semtools_fix

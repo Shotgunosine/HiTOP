@@ -19,3 +19,7 @@ archive/
 
 # User-specific files
 .Ruserdata
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml

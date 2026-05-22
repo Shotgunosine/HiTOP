@@ -55,9 +55,22 @@ and the following R packages (for CFA analysis):
 
 The CFA code uses a mix of python and R libraries, so it might get tricky. For integration between pythion and R, we used the version of rpy2=3.5.1, r-base=4.2.3. 
 
+### Pixi instructions (recommended):
+
+Install (pixi)[https://pixi.prefix.dev/latest/#quick-demo] if you don't have it.
+Use pixi to run the `install_r_libraries.py` script. For some reason the compatible versions of some packages we need aren't on conda-forge, so we have to  `install.packages` instead.
+`pixi run ./install_r_libraries.py`
+
+After that, you can run a jupyter lab session and execute our notebooks.
+`pixi run jupyter lab`
+
+### Conda instructions:
 You can create a conda environment with:
 
 `conda env create -p ./env -f environment_hitop.yml`
 
-Loading R packages from the environment might cause errors. In that case, we recommend loading python packages from the provided environment and then installing R packages separately into the loaded environment.
+Then activate the conda environment. BE SURE YOU HAVE ACTIVATED YOUR ENV. The following command is going to install some r libraries, if you haven't activated your conda env, they could get installed who knows where. The run this command:
+`python ./install_r_libraries.py`
+
+
 

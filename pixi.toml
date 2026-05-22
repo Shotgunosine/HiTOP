@@ -1,0 +1,24 @@
+[workspace]
+authors = ["Dylan Nielson <adenosine@gmail.com>"]
+channels = ["conda-forge", "main", "r", "msys2"]
+name = "env_semtools_fix"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+seaborn = "*"
+python = "3.11.*"
+statsmodels = "*"
+scipy = "*"
+jupyter = "*"
+pandas = "*"
+scikit-learn = "*"
+numpy = "*"
+matplotlib = "*"
+openpyxl = "*"
+pingouin = "*"
+rpy2 = "3.5.1.*"
+r-mass = ">=7.3_60.0.1,<8"
+r-matrix = ">=1.6_5,<2"
