@@ -17,7 +17,7 @@ Francisco Pereira
 
 # Abstract
 
-This is the repostory for the code used for the manuscript "Test-Retest reliability and measurement invariance of a subset of the HiTOP internalizing scales with a two-week time window". 
+This is the repository for the code used for the manuscript "Test-Retest reliability and measurement invariance of a subset of the HiTOP internalizing scales with a two-week time window". 
 
 The Hierarchical Taxonomy of Psychopathology (HiTOP) is a novel way of measuring psychopathology, which addresses problems of existing measures.
 The validated HiTOP scales have a 1-year assessment window. This poses a challenge for relating them to individual performance on cognitive tasks collected in a single day, 
@@ -72,5 +72,12 @@ You can create a conda environment with:
 Then activate the conda environment. BE SURE YOU HAVE ACTIVATED YOUR ENV. The following command is going to install some r libraries, if you haven't activated your conda env, they could get installed who knows where. The run this command:
 `python ./install_r_libraries.py`
 
-
+Note that install_r_libraries is installing a version of `semTools` that fixes a rare intermittent bug in the permutation function.
+Also, I'm setting the following environmental variables in pixi.toml:
+```
+OPENBLAS_NUM_THREADS = "1"
+MKL_NUM_THREADS = "1"
+OMP_NUM_THREADS = "1"
+```
+If you aren't using pixi, you'll need to set those yourself.
 
