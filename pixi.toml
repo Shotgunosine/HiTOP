@@ -22,3 +22,9 @@ pingouin = "*"
 rpy2 = "3.5.1.*"
 r-mass = ">=7.3_60.0.1,<8"
 r-matrix = ">=1.6_5,<2"
+r-devtools = ">=2.4.5,<3"
+
+[activation.env]
+OPENBLAS_NUM_THREADS = "1"
+MKL_NUM_THREADS = "1"
+OMP_NUM_THREADS = "1"
