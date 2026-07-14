@@ -1,6 +1,18 @@
 # log files
 my_log*
 logs/
+log/
+
+# crash dumps from permutation runs
+crashes/
+
+# data files (git add -f to track specific files)
+data/
+*.csv
+*.tsv
+*.pkl
+*.rds
+*.xlsx
 
 # notebook checkpoints
 .ipynb_checkpoints/
