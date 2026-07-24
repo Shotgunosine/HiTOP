@@ -35,3 +35,7 @@ archive/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# python bytecode
+__pycache__/
+*.pyc
