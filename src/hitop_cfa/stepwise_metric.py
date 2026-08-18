@@ -1,44 +1,62 @@
 # =============================================================================
-# Stepwise CFA with two-tier removal (v7):
-#   - Marker is now ablatable; when removed, the new first item in the
-#     remaining list implicitly becomes the marker for subsequent fits.
-#   - Configural failure -> bounded combinatorial ablation. Find smallest k
-#     such that some k-item ablation achieves 3-way configural invariance.
-#     Within that k, pick by CFI -> TLI -> RMSEA cascade. If no combo at
-#     any k <= n_items - min_items passes, stop and report failure.
-#   - Metric failure with configural OK -> permuted-MI removal (one item).
-#     The current marker (first item) is still excluded here since its
-#     loading is fixed and has no MI; this exclusion is purely local to
-#     the model being fit, not a fixed assignment.
+# Stepwise CFA targeting metric invariance (v8, measEq):
+#   - Every model is a Wu & Estabrook (2016) model from
+#     semTools::measEq.syntax (ID.cat = "Wu.Estabrook.2016",
+#     ID.fac = "std.lv"); plain group.equal shortcuts are vacuous for
+#     ordinal indicators (see measeq.py / HANDOFF_measeq_fix.md).
+#   - Per-pair test ladder: configural -> thresholds -> metric
+#     (metric = thresholds + loadings). assert_level_adds_df runs before
+#     every permuteMeasEq delta test.
+#   - Under std.lv there is NO marker item (factor variance fixed in the
+#     reference group), so every item has a testable loading MI and no item
+#     is excluded from MI candidacy or ablation.
+#   - Removal tiers:
+#       configural failure -> bounded combinatorial ablation. Find smallest
+#         k such that some k-item ablation achieves 3-way configural
+#         invariance; within that k, pick by CFI -> TLI -> RMSEA cascade
+#         (all_config_passed filter first). If no combo at any
+#         k <= n_items - min_items passes, stop and report failure.
+#       thresholds failure (config OK) -> single-item threshold-MI removal
+#         (extract_item_mis_from_thresholds; max MI per item over its
+#         threshold constraints).
+#       metric failure (thresholds OK) -> single-item loading-MI removal.
 # =============================================================================
 from itertools import combinations
 
 import pandas as pd
 
-from .r_env import (RRuntimeError, localconverter, pandas2ri, ro, semtools,
-                    set_seeds)
-from .fit import (build_cfa_cmd, check_secondary_criteria, extract_p,
-                  push_model_to_r)
+from .r_env import localconverter, pandas2ri, ro, set_seeds
+from .fit import (check_secondary_criteria, extract_p,
+                  permute_measeq_with_retry, push_model_to_r)
+from .measeq import (WU_ESTABROOK_LEVELS, assert_level_adds_df,
+                     extract_item_mis_from_thresholds, fit_measeq_level)
 
 DEFAULT_CFI_TIE_TOLERANCE = 0.001
 DEFAULT_TLI_TIE_TOLERANCE = 0.001
 
+_GROUP_EQUAL = dict(WU_ESTABROOK_LEVELS)
+
 
 def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp_path,
                             num_iter, cpus_to_use, configural_only=False,
-                            parameterization="theta", ordered=None):
-    set_seeds(12345)
+                            parameterization="theta"):
+    """Test one dataset pair configural -> thresholds -> metric with
+    Wu-Estabrook measEq models, stopping at the first failed level.
 
-    if ordered is None:
-        ordered = list_of_items
+    Returns a dict with per-level p-values / pass flags, configural fit
+    indices, and (when the corresponding level failed) per-item MI dicts:
+    ``thresholds_item_mis`` (threshold-equality MIs, op "|") and
+    ``item_mis`` (loading MIs, op "=~").
+    """
+    set_seeds(12345)
 
     push_model_to_r(scalename, list_of_items, mydata_python, mydata_temp_path)
 
-    fit_config = ro.r(build_cfa_cmd(ordered, parameterization))
-    ro.globalenv['fit_config'] = fit_config
-    out_config = semtools.permuteMeasEq(
-        nPermute=num_iter, con=fit_config,
-        parallelType="multicore", ncpus=cpus_to_use)
+    fit_config = fit_measeq_level(list_of_items, group_equal=None,
+                                  parameterization=parameterization,
+                                  r_fit_name='fit_config')
+    out_config = permute_measeq_with_retry(num_iter, cpus_to_use,
+                                           con=fit_config)
     config_p = float(extract_p(out_config))
     config_passed_primary = (config_p >= 0.05)
     config_passed_secondary, cfi, tli, rmsea = check_secondary_criteria(fit_config)
@@ -51,6 +69,9 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
         'config_cfi':            cfi,
         'config_tli':            tli,
         'config_rmsea':          rmsea,
+        'thresholds_p':          None,
+        'thresholds_passed':     None,
+        'thresholds_item_mis':   None,
         'metric_p':              None,
         'metric_passed':         None,
         'item_mis':              None,
@@ -58,28 +79,36 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
     if configural_only or not config_passed:
         return result
 
-    fit_metric = ro.r(build_cfa_cmd(ordered, parameterization, group_equal="loadings"))
-    ro.globalenv['fit_metric'] = fit_metric
+    # ----- Thresholds (ordinal analog of the location constraint) -----
+    fit_thresholds = fit_measeq_level(list_of_items,
+                                      group_equal=_GROUP_EQUAL['thresholds'],
+                                      parameterization=parameterization,
+                                      r_fit_name='fit_thresholds')
+    assert_level_adds_df('fit_config', 'fit_thresholds',
+                         'configural', 'thresholds')
+    out_thresholds = permute_measeq_with_retry(
+        num_iter, cpus_to_use, uncon=fit_config, con=fit_thresholds,
+        param="thresholds")
+    ro.globalenv['out_thresholds'] = out_thresholds
+    thresholds_p = float(extract_p(out_thresholds))
+    thresholds_passed = (thresholds_p >= 0.05)
+    result['thresholds_p'] = thresholds_p
+    result['thresholds_passed'] = thresholds_passed
+    if not thresholds_passed:
+        result['thresholds_item_mis'] = extract_item_mis_from_thresholds(
+            list_of_items)
+        return result
 
-    try:
-        out_metric = semtools.permuteMeasEq(
-            nPermute=num_iter, uncon=fit_config, con=fit_metric,
-            param="loadings",
-            parallelType="multicore", ncpus=cpus_to_use)
-    except RRuntimeError:
-        # sometimes this fit fails in forked workers; retry with fewer
-        # workers, then serially
-        try:
-            out_metric = semtools.permuteMeasEq(
-                nPermute=num_iter, uncon=fit_config, con=fit_metric,
-                param="loadings",
-                parallelType="multicore", ncpus=cpus_to_use // 2)
-        except RRuntimeError:
-            out_metric = semtools.permuteMeasEq(
-                nPermute=num_iter, uncon=fit_config, con=fit_metric,
-                param="loadings",
-                parallelType="no", ncpus=cpus_to_use // 2)
-
+    # ----- Metric (thresholds + loadings) -----
+    fit_metric = fit_measeq_level(list_of_items,
+                                  group_equal=_GROUP_EQUAL['metric'],
+                                  parameterization=parameterization,
+                                  r_fit_name='fit_metric')
+    assert_level_adds_df('fit_thresholds', 'fit_metric',
+                         'thresholds', 'metric')
+    out_metric = permute_measeq_with_retry(
+        num_iter, cpus_to_use, uncon=fit_thresholds, con=fit_metric,
+        param="loadings")
     ro.globalenv['out_metric'] = out_metric
     metric_p = float(extract_p(out_metric))
     metric_passed = (metric_p >= 0.05)
@@ -120,8 +149,9 @@ def extract_item_mis_from_metric(item_list):
 def find_worst_item(mi_dicts_failing, excluded_item, current_items):
     """
     Aggregate MIs across failing comparisons and return the item with the
-    highest sum. excluded_item is dropped from candidacy (typically the
-    current model's marker, whose loading is fixed and has no MI).
+    highest sum. excluded_item is dropped from candidacy; under std.lv
+    identification there is no marker item, so callers pass
+    excluded_item=None (the parameter is kept for API compatibility).
     """
     aggregated = {}
     for item in current_items:
@@ -165,7 +195,9 @@ def _build_history_row(iteration, phase, items, candidate_dropped,
     }
     cfis, tlis, rmseas = [], [], []
     all_config_passed = True
+    all_thresholds_passed = True
     all_metric_passed = True
+    thresholds_evaluable = True
     metric_evaluable = True
 
     for name, r in pair_results.items():
@@ -175,6 +207,8 @@ def _build_history_row(iteration, phase, items, candidate_dropped,
         row[f'{name}_config_cfi']            = r['config_cfi']
         row[f'{name}_config_tli']            = r['config_tli']
         row[f'{name}_config_rmsea']          = r['config_rmsea']
+        row[f'{name}_thresholds_p']          = r['thresholds_p']
+        row[f'{name}_thresholds_passed']     = r['thresholds_passed']
         row[f'{name}_metric_p']              = r['metric_p']
         row[f'{name}_metric_passed']         = r['metric_passed']
 
@@ -183,23 +217,32 @@ def _build_history_row(iteration, phase, items, candidate_dropped,
         rmseas.append(r['config_rmsea'])
         if not r['config_passed']:
             all_config_passed = False
+            thresholds_evaluable = False
+            metric_evaluable = False
+        if r['thresholds_passed'] is None:
+            thresholds_evaluable = False
+            metric_evaluable = False
+        elif not r['thresholds_passed']:
+            all_thresholds_passed = False
             metric_evaluable = False
         if r['metric_passed'] is None:
             metric_evaluable = False
         elif not r['metric_passed']:
             all_metric_passed = False
 
-    row['min_config_cfi']    = min(cfis) if cfis else None
-    row['min_config_tli']    = min(tlis) if tlis else None
-    row['max_config_rmsea']  = max(rmseas) if rmseas else None
-    row['all_config_passed'] = all_config_passed
-    row['all_metric_passed'] = (all_metric_passed if metric_evaluable else None)
-    row['action']            = action
-    row['removed_items']     = removed_items
-    row['removal_reason']    = removal_reason
-    row['cfi_tied_count']    = cfi_tied_count
-    row['tli_tied_count']    = tli_tied_count
-    row['mis_used']          = mis_used
+    row['min_config_cfi']       = min(cfis) if cfis else None
+    row['min_config_tli']       = min(tlis) if tlis else None
+    row['max_config_rmsea']     = max(rmseas) if rmseas else None
+    row['all_config_passed']    = all_config_passed
+    row['all_thresholds_passed'] = (all_thresholds_passed
+                                    if thresholds_evaluable else None)
+    row['all_metric_passed']    = (all_metric_passed if metric_evaluable else None)
+    row['action']               = action
+    row['removed_items']        = removed_items
+    row['removal_reason']       = removal_reason
+    row['cfi_tied_count']       = cfi_tied_count
+    row['tli_tied_count']       = tli_tied_count
+    row['mis_used']             = mis_used
     return row
 
 
@@ -230,8 +273,7 @@ def _search_combo_ablation(whichscale, current, min_items, iteration,
     """
     Search the smallest combo size k such that some k-item ablation
     achieves 3-way configural invariance. ALL items in `current` are
-    candidates -- the marker is now ablatable; when removed, the new
-    first item implicitly becomes the marker for the resulting model.
+    candidates (there is no marker under std.lv identification).
     """
     candidates_pool = list(current)  # everything is fair game
     max_level = len(current) - min_items
@@ -282,6 +324,42 @@ def _search_combo_ablation(whichscale, current, min_items, iteration,
     return None, None, None, None, None
 
 
+def _mi_removal_step(level_label, failing_mis, current, removed, history_rows,
+                     it, main_results, fail_action, removal_action,
+                     removal_reason, build_row):
+    """Shared single-item MI-removal step for the thresholds/metric tiers.
+
+    Returns True if an item was removed, False if no worst item could be
+    identified (caller should stop)."""
+    worst, aggregated = find_worst_item(failing_mis,
+                                        excluded_item=None,
+                                        current_items=current)
+
+    if worst is None:
+        print(f"  Could not identify a worst item from {level_label} MIs. "
+              f"Stopping.")
+        row = build_row(it, 'main', current, None, main_results,
+                        action=fail_action, mis_used=aggregated)
+        history_rows.append(row)
+        return False
+
+    print(f"  Aggregated {level_label} MIs (summed over failing comparisons):")
+    for item, mi in sorted(aggregated.items(), key=lambda kv: -kv[1]):
+        print(f"    {item}: {mi:.3f}")
+    print(f"  -> Removing: {worst}")
+
+    row = build_row(it, 'main', current, None, main_results,
+                    action=removal_action,
+                    removed_items=(worst,),
+                    removal_reason=removal_reason,
+                    mis_used=aggregated)
+    history_rows.append(row)
+
+    removed.append(worst)
+    current.remove(worst)
+    return True
+
+
 def do_three_way_cfa_stepwise_mi(whichscale, orig_items, datasets, temp_path,
                                  num_iter, cpus_to_use,
                                  min_items=3,
@@ -291,15 +369,13 @@ def do_three_way_cfa_stepwise_mi(whichscale, orig_items, datasets, temp_path,
                                  tli_tie_tolerance=DEFAULT_TLI_TIE_TOLERANCE,
                                  parameterization="theta"):
     """
-    Stepwise CFA with multi-level combinatorial ablation for configural
-    failures and MI-based single-item removal for metric failures.
+    Stepwise CFA targeting 3-way metric invariance under the Wu-Estabrook
+    ladder (configural -> thresholds -> metric), with multi-level
+    combinatorial ablation for configural failures and MI-based single-item
+    removal for thresholds and metric failures.
 
-    The marker is ablatable: any item (including the first in the original
-    scale) can be removed during configural ablation. After a marker
-    removal, the new first item of the remaining list becomes the marker
-    for subsequent model fits (lavaan's default behavior). At metric-MI
-    steps, the *current* marker (current[0] at that step) is excluded
-    from MI consideration because its loading is fixed and has no MI.
+    Under std.lv identification there is no marker item: every item has a
+    testable loading MI and every item is an ablation candidate.
 
     Parameters
     ----------
@@ -316,8 +392,8 @@ def do_three_way_cfa_stepwise_mi(whichscale, orig_items, datasets, temp_path,
     history : pd.DataFrame
         Columns include `ablation_level` (int, when from ablation),
         `removed_items` (tuple of strings), `removal_reason` in
-        {'cfi_max_min', 'tli_tiebreaker', 'rmsea_tiebreaker', 'mi_worst',
-         None}.
+        {'cfi_max_min', 'tli_tiebreaker', 'rmsea_tiebreaker',
+         'thresholds_mi_worst', 'mi_worst', None}.
     """
     print(f"\n{'='*60}\nSTEPWISE CFA: {whichscale.upper()}\n{'='*60}")
 
@@ -337,8 +413,7 @@ def do_three_way_cfa_stepwise_mi(whichscale, orig_items, datasets, temp_path,
         max_iter = len(current) - min_items
 
     for it in range(max_iter + 1):
-        print(f"\n--- Iteration {it}: {len(current)} items "
-              f"(marker = {current[0]}) ---")
+        print(f"\n--- Iteration {it}: {len(current)} items ---")
         print(f"Current: {current}")
 
         if len(current) < min_items:
@@ -355,20 +430,22 @@ def do_three_way_cfa_stepwise_mi(whichscale, orig_items, datasets, temp_path,
                                        configural_only=False,
                                        parameterization=parameterization)
         all_config = all(r['config_passed'] for r in main_results.values())
+        all_thresholds = all(r['thresholds_passed'] is True
+                             for r in main_results.values()) if all_config else False
         all_metric = all(r['metric_passed'] is True
-                         for r in main_results.values()) if all_config else False
+                         for r in main_results.values()) if all_thresholds else False
 
-        if all_config and all_metric:
+        if all_config and all_thresholds and all_metric:
             print(f"\n*** 3-way metric invariance achieved with {len(current)} items ***")
             row = _build_history_row(it, 'main', current, None, main_results,
                                      action='success')
             history_rows.append(row)
             return current, removed, pd.DataFrame(history_rows)
 
-        # ----- Configural failure: combinatorial ablation (marker ablatable) -----
+        # ----- Configural failure: combinatorial ablation -----
         if not all_config:
             print("Configural failed for at least one comparison; running "
-                  "combinatorial ablation search (all items, incl. marker)...")
+                  "combinatorial ablation search (all items)...")
             row = _build_history_row(it, 'main', current, None, main_results,
                                      action='configural_ablation_starting')
             history_rows.append(row)
@@ -404,42 +481,35 @@ def do_three_way_cfa_stepwise_mi(whichscale, orig_items, datasets, temp_path,
                 current.remove(item)
             continue
 
-        # ----- Configural OK, metric failed: single-item MI removal -----
-        # The marker for the *current* fit is current[0]; exclude it from
-        # MI candidacy (its loading is fixed). If a prior ablation step
-        # changed who current[0] is, that change naturally carries through.
-        print(f"Configural OK but metric failed; running MI-based removal "
-              f"(excluding current marker {current[0]})...")
-        failing_mis = []
-        for r in main_results.values():
-            if r['metric_passed'] is False and r['item_mis']:
-                failing_mis.append(r['item_mis'])
+        # ----- Configural OK, thresholds failed: threshold-MI removal -----
+        if not all_thresholds:
+            print("Configural OK but thresholds failed; running "
+                  "threshold-MI-based removal...")
+            failing_mis = [r['thresholds_item_mis']
+                           for r in main_results.values()
+                           if r['thresholds_passed'] is False
+                           and r['thresholds_item_mis']]
+            if not _mi_removal_step('threshold', failing_mis, current, removed,
+                                    history_rows, it, main_results,
+                                    fail_action='failed_no_thresholds_mi',
+                                    removal_action='thresholds_mi_removal',
+                                    removal_reason='thresholds_mi_worst',
+                                    build_row=_build_history_row):
+                return None, removed, pd.DataFrame(history_rows)
+            continue
 
-        worst, aggregated = find_worst_item(failing_mis,
-                                            excluded_item=current[0],
-                                            current_items=current)
-
-        if worst is None:
-            print("  Could not identify a worst item from MIs. Stopping.")
-            row = _build_history_row(it, 'main', current, None, main_results,
-                                     action='failed_no_mi', mis_used=aggregated)
-            history_rows.append(row)
+        # ----- Thresholds OK, metric failed: single-item loading-MI removal -----
+        print("Thresholds OK but metric failed; running loading-MI-based "
+              "removal...")
+        failing_mis = [r['item_mis'] for r in main_results.values()
+                       if r['metric_passed'] is False and r['item_mis']]
+        if not _mi_removal_step('loading', failing_mis, current, removed,
+                                history_rows, it, main_results,
+                                fail_action='failed_no_mi',
+                                removal_action='metric_mi_removal',
+                                removal_reason='mi_worst',
+                                build_row=_build_history_row):
             return None, removed, pd.DataFrame(history_rows)
-
-        print(f"  Aggregated MIs (summed over failing comparisons):")
-        for item, mi in sorted(aggregated.items(), key=lambda kv: -kv[1]):
-            print(f"    {item}: {mi:.3f}")
-        print(f"  -> Removing: {worst}")
-
-        row = _build_history_row(it, 'main', current, None, main_results,
-                                 action='metric_mi_removal',
-                                 removed_items=(worst,),
-                                 removal_reason='mi_worst',
-                                 mis_used=aggregated)
-        history_rows.append(row)
-
-        removed.append(worst)
-        current.remove(worst)
 
     print(f"\nHit max_iter ({max_iter}) without convergence.")
     history_rows.append({
