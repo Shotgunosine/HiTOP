@@ -35,7 +35,9 @@ All code should be run in this order, cell by cell, changing paths as appropriat
 + **NB_2_cfa.ipynb** runs confirmatory factor analysis.
 + **NB_3_ICC.ipynb** runs test-retest reliability analysis.
 + **NB_4_convdiv.ipynb** tests convergent and divergent hypotheses.
++ **NB_5_compare_to_archived** compares results against archived results from OSF.
 + ***NB_icc_plots.ipynb*** is used to produce Fig. 3 (ICC results).
++ ***NB_invariance_plot.ipyn*** produces a figure of the invariance of the original scales
 
 If you come across an issue, please submit it in this repository or reach out to [Marie Zelenina](https://github.com/mariezelenina) or [Dylan Nielson](https://github.com/Shotgunosine) with questions.
 
