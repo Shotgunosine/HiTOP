@@ -1,25 +1,39 @@
 # =============================================================================
-# Stepwise CFA for scalar invariance (v1).
-# Takes a set of metric-invariant items and searches for a scalar-invariant
-# core via stepwise item removal, following the same prereg-consistent
-# pattern as the metric procedure:
-#   - If a lower level fails after item removal (configural or metric):
-#     handle that first (CFI-ablation for configural, loading MIs for metric)
-#   - At scalar level: remove items based on permuted maximum INTERCEPT
-#     modification index (mirrors the loading-MI logic from metric)
+# Stepwise CFA for scalar invariance (v3).
 #
-# Returns a DataFrame with one row per test (main or ablation candidate)
-# and a parallel set of columns to the metric procedure plus scalar_*
-# fields.
+# New in v3:
+#   - Can resume from a completed metric stepwise run. The metric notebook
+#     saves per-scale histories as ``cfa_dir / f'{scale}_history.pkl'`` and a
+#     summary as ``cfa_dir / 'stepwise.pkl'``; ``load_metric_run`` reads the
+#     per-scale history (falling back to the summary) and returns the
+#     metric-invariant core, and ``do_stepwise_scalar_from_metric_run`` wires
+#     that straight into the scalar search.
+#   - Because the metric run already verified configural + metric invariance
+#     for the core (same data, same seeds, same parameterization), the first
+#     iteration skips the configural and metric permutation tests and runs
+#     only the scalar test (``assume_metric_invariant=True``). The models are
+#     still fit (permuteMeasEq needs the lavaan objects); only the two
+#     redundant permutation tests are skipped, saving ~6 permutation runs.
+#     History rows record ``lower_levels_assumed=True`` for transparency.
+#     Set ``assume_metric_invariant=False`` to re-verify everything.
 #
-# Note: this implements item removal at scalar, matching the preregistration
-# ("remove items from the scale in step-wise order"). The methodologically
-# more common alternative is partial scalar invariance (free a single
-# intercept rather than dropping the item), which is implemented separately
-# elsewhere. Item removal is more aggressive but produces a cleaner "core
-# set of scalar-invariant items" that matches what the preregistration
-# asked for.
+# Also brought in line with stepwise_metric v7:
+#   - Marker is ablatable during configural ablation; the current marker is
+#     whichever item is first in the remaining list (lavaan's default).
+#   - Configural regression is handled by bounded combinatorial multi-level
+#     ablation, filtering candidates by all_config_passed before the
+#     CFI -> TLI -> RMSEA cascade (imported from stepwise_metric).
+#   - History rows use ``removed_items`` (tuple) and ``ablation_level``.
+#
+# Removal logic by level (unchanged in spirit):
+#   - configural regression (defensive)  -> combinatorial ablation
+#   - metric regression (defensive)      -> single-item loading-MI removal
+#   - scalar failure (the main case)     -> single-item intercept-MI removal
 # =============================================================================
+from itertools import combinations
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
 
 from .r_env import (RRuntimeError, localconverter, pandas2ri, ro, semtools,
@@ -28,7 +42,57 @@ from .fit import (build_cfa_cmd, check_secondary_criteria, extract_p,
                   push_model_to_r)
 from .stepwise_metric import (DEFAULT_CFI_TIE_TOLERANCE,
                               DEFAULT_TLI_TIE_TOLERANCE,
+                              _pick_by_cascade,
                               extract_item_mis_from_metric, find_worst_item)
+
+
+# -----------------------------------------------------------------------------
+# Loading a completed metric stepwise run
+# -----------------------------------------------------------------------------
+def load_metric_run(cfa_dir, scale):
+    """Load the metric-invariant core for ``scale`` from a completed metric
+    stepwise run.
+
+    Looks for ``cfa_dir / f'{scale}_history.pkl'`` first (the per-scale
+    history written by the metric loop in NB_2_cfa_as_reg). If that file is
+    missing, falls back to the ``stepwise.pkl`` summary (or
+    ``stepwise_in_progress.pkl`` if the final summary isn't there).
+
+    Returns
+    -------
+    metric_core : list[str] or None
+        The metric-invariant item set, or None if the metric run did not
+        find one for this scale.
+    metric_history : pd.DataFrame or None
+        The full metric history when loaded from the per-scale pickle;
+        None when only the summary was available.
+    """
+    cfa_dir = Path(cfa_dir)
+
+    hist_path = cfa_dir / f'{scale}_history.pkl'
+    if hist_path.exists():
+        history = pd.read_pickle(hist_path)
+        success = history[history['action'] == 'success']
+        if len(success) == 0:
+            return None, history
+        return list(success.iloc[-1]['items']), history
+
+    for summary_name in ('stepwise.pkl', 'stepwise_in_progress.pkl'):
+        summary_path = cfa_dir / summary_name
+        if summary_path.exists():
+            summary = pd.read_pickle(summary_path)
+            row = summary[summary['scale'] == scale]
+            if len(row) == 0:
+                continue
+            item_nos = row.iloc[-1].get('item_nos')
+            if item_nos is None or (np.isscalar(item_nos) and pd.isna(item_nos)):
+                return None, None
+            return list(item_nos), None
+
+    raise FileNotFoundError(
+        f"No metric run found for {scale!r} in {cfa_dir} "
+        f"(looked for {scale}_history.pkl, stepwise.pkl, "
+        f"stepwise_in_progress.pkl)")
 
 
 # -----------------------------------------------------------------------------
@@ -36,13 +100,21 @@ from .stepwise_metric import (DEFAULT_CFI_TIE_TOLERANCE,
 # -----------------------------------------------------------------------------
 def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp_path,
                             num_iter, cpus_to_use, max_level='scalar',
-                            parameterization="theta", ordered=None):
+                            parameterization="theta", ordered=None,
+                            skip_lower_tests=False):
     """
     Parameters
     ----------
     max_level : {'configural', 'metric', 'scalar'}
         Highest invariance level to test. Lower levels are always tested
         first; the test sequence stops at the first failure or at max_level.
+    skip_lower_tests : bool
+        If True, fit the configural and metric models but skip their
+        permutation tests, treating both levels as passed. Only valid when
+        the caller has already verified configural + metric invariance for
+        exactly these items on exactly this data (e.g. resuming from a
+        completed metric stepwise run: fixed seeds make the skipped tests
+        deterministic re-runs). config_p / metric_p are recorded as NaN.
 
     Returns
     -------
@@ -50,7 +122,8 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
         config_p, config_passed, config_passed_primary,
         config_cfi, config_tli, config_rmsea,
         metric_p, metric_passed, metric_item_mis,
-        scalar_p, scalar_passed, scalar_item_mis
+        scalar_p, scalar_passed, scalar_item_mis,
+        lower_levels_assumed
     metric_item_mis is the dict of LOADING MIs (op == "=~") populated only
     when metric failed. scalar_item_mis is the dict of INTERCEPT MIs
     (op == "~1") populated only when scalar failed.
@@ -63,15 +136,25 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
     push_model_to_r(scalename, list_of_items, mydata_python, mydata_temp_path)
 
     # ----- Configural -----
+    # The configural model must be fit even when skipping its permutation
+    # test: permuteMeasEq(uncon=fit_config, ...) needs the lavaan object.
     fit_config = ro.r(build_cfa_cmd(ordered, parameterization))
     ro.globalenv['fit_config'] = fit_config
-    out_config = semtools.permuteMeasEq(
-        nPermute=num_iter, con=fit_config,
-        parallelType="multicore", ncpus=cpus_to_use)
-    config_p = float(extract_p(out_config))
-    config_passed_primary = (config_p >= 0.05)
-    config_passed_secondary, cfi, tli, rmsea = check_secondary_criteria(fit_config)
-    config_passed = config_passed_primary or config_passed_secondary
+
+    if skip_lower_tests:
+        config_p = np.nan
+        config_passed_primary = True
+        config_passed = True
+        # fit indices are cheap (no permutations) -- keep them for the record
+        _, cfi, tli, rmsea = check_secondary_criteria(fit_config)
+    else:
+        out_config = semtools.permuteMeasEq(
+            nPermute=num_iter, con=fit_config,
+            parallelType="multicore", ncpus=cpus_to_use)
+        config_p = float(extract_p(out_config))
+        config_passed_primary = (config_p >= 0.05)
+        config_passed_secondary, cfi, tli, rmsea = check_secondary_criteria(fit_config)
+        config_passed = config_passed_primary or config_passed_secondary
 
     result = {
         'config_p':              config_p,
@@ -86,6 +169,7 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
         'scalar_p':              None,
         'scalar_passed':         None,
         'scalar_item_mis':       None,
+        'lower_levels_assumed':  skip_lower_tests,
     }
 
     if max_level == 'configural' or not config_passed:
@@ -95,32 +179,36 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
     fit_metric = ro.r(build_cfa_cmd(ordered, parameterization, group_equal="loadings"))
     ro.globalenv['fit_metric'] = fit_metric
 
-    try:
-        out_metric = semtools.permuteMeasEq(
-            nPermute=num_iter, uncon=fit_config, con=fit_metric,
-            param="loadings",
-            parallelType="multicore", ncpus=cpus_to_use)
-    except RRuntimeError:
+    if skip_lower_tests:
+        result['metric_p'] = np.nan
+        result['metric_passed'] = True
+    else:
         try:
             out_metric = semtools.permuteMeasEq(
                 nPermute=num_iter, uncon=fit_config, con=fit_metric,
                 param="loadings",
-                parallelType="multicore", ncpus=cpus_to_use // 2)
+                parallelType="multicore", ncpus=cpus_to_use)
         except RRuntimeError:
-            out_metric = semtools.permuteMeasEq(
-                nPermute=num_iter, uncon=fit_config, con=fit_metric,
-                param="loadings",
-                parallelType="no", ncpus=cpus_to_use // 2)
+            try:
+                out_metric = semtools.permuteMeasEq(
+                    nPermute=num_iter, uncon=fit_config, con=fit_metric,
+                    param="loadings",
+                    parallelType="multicore", ncpus=cpus_to_use // 2)
+            except RRuntimeError:
+                out_metric = semtools.permuteMeasEq(
+                    nPermute=num_iter, uncon=fit_config, con=fit_metric,
+                    param="loadings",
+                    parallelType="no", ncpus=cpus_to_use // 2)
 
-    ro.globalenv['out_metric'] = out_metric
-    metric_p = float(extract_p(out_metric))
-    metric_passed = (metric_p >= 0.05)
-    result['metric_p'] = metric_p
-    result['metric_passed'] = metric_passed
-    if not metric_passed:
-        result['metric_item_mis'] = extract_item_mis_from_metric(list_of_items)
+        ro.globalenv['out_metric'] = out_metric
+        metric_p = float(extract_p(out_metric))
+        metric_passed = (metric_p >= 0.05)
+        result['metric_p'] = metric_p
+        result['metric_passed'] = metric_passed
+        if not metric_passed:
+            result['metric_item_mis'] = extract_item_mis_from_metric(list_of_items)
 
-    if max_level == 'metric' or not metric_passed:
+    if max_level == 'metric' or not result['metric_passed']:
         return result
 
     # ----- Scalar -----
@@ -202,26 +290,29 @@ def extract_item_mis_from_scalar(item_list):
 
 def _test_all_pairs_scalar(scalename, items, datasets, temp_path,
                            num_iter, cpus_to_use, max_level='scalar',
-                           parameterization="theta"):
+                           parameterization="theta", skip_lower_tests=False):
     results = {}
     for name, data in datasets.items():
         results[name] = cfa_test_scalar_with_mi(
             scalename, items, data, temp_path,
             num_iter=num_iter, cpus_to_use=cpus_to_use,
-            max_level=max_level, parameterization=parameterization)
+            max_level=max_level, parameterization=parameterization,
+            skip_lower_tests=skip_lower_tests)
     return results
 
 
 def _build_history_row_scalar(iteration, phase, items, candidate_dropped,
-                              pair_results, action=None, removed_item=None,
+                              pair_results, action=None, removed_items=None,
                               removal_reason=None, mis_used=None,
-                              cfi_tied_count=None, tli_tied_count=None):
+                              cfi_tied_count=None, tli_tied_count=None,
+                              ablation_level=None):
     row = {
         'iteration':         iteration,
         'phase':             phase,
         'candidate_dropped': candidate_dropped,
         'n_items':           len(items),
         'items':             tuple(items),
+        'ablation_level':    ablation_level,
     }
     cfis, tlis, rmseas = [], [], []
     all_config_passed = True
@@ -229,6 +320,7 @@ def _build_history_row_scalar(iteration, phase, items, candidate_dropped,
     all_scalar_passed = True
     metric_evaluable = True
     scalar_evaluable = True
+    lower_assumed = False
 
     for name, r in pair_results.items():
         row[f'{name}_config_p']              = r['config_p']
@@ -245,6 +337,7 @@ def _build_history_row_scalar(iteration, phase, items, candidate_dropped,
         cfis.append(r['config_cfi'])
         tlis.append(r['config_tli'])
         rmseas.append(r['config_rmsea'])
+        lower_assumed = lower_assumed or r.get('lower_levels_assumed', False)
 
         if not r['config_passed']:
             all_config_passed = False
@@ -261,19 +354,82 @@ def _build_history_row_scalar(iteration, phase, items, candidate_dropped,
         elif not r['scalar_passed']:
             all_scalar_passed = False
 
-    row['min_config_cfi']    = min(cfis) if cfis else None
-    row['min_config_tli']    = min(tlis) if tlis else None
-    row['max_config_rmsea']  = max(rmseas) if rmseas else None
-    row['all_config_passed'] = all_config_passed
-    row['all_metric_passed'] = (all_metric_passed if metric_evaluable else None)
-    row['all_scalar_passed'] = (all_scalar_passed if scalar_evaluable else None)
-    row['action']            = action
-    row['removed_item']      = removed_item
-    row['removal_reason']    = removal_reason
-    row['cfi_tied_count']    = cfi_tied_count
-    row['tli_tied_count']    = tli_tied_count
-    row['mis_used']          = mis_used
+    row['min_config_cfi']       = min(cfis) if cfis else None
+    row['min_config_tli']       = min(tlis) if tlis else None
+    row['max_config_rmsea']     = max(rmseas) if rmseas else None
+    row['all_config_passed']    = all_config_passed
+    row['all_metric_passed']    = (all_metric_passed if metric_evaluable else None)
+    row['all_scalar_passed']    = (all_scalar_passed if scalar_evaluable else None)
+    row['lower_levels_assumed'] = lower_assumed
+    row['action']               = action
+    row['removed_items']        = removed_items
+    row['removal_reason']       = removal_reason
+    row['cfi_tied_count']       = cfi_tied_count
+    row['tli_tied_count']       = tli_tied_count
+    row['mis_used']             = mis_used
     return row
+
+
+def _search_combo_ablation_scalar(whichscale, current, min_items, iteration,
+                                  cfi_tie_tolerance, tli_tie_tolerance,
+                                  history_rows, datasets, temp_path,
+                                  num_iter, cpus_to_use,
+                                  parameterization="theta"):
+    """
+    Search the smallest combo size k such that some k-item ablation
+    achieves 3-way configural invariance. ALL items in ``current`` are
+    candidates -- the marker is ablatable; when removed, the new first
+    item implicitly becomes the marker for the resulting model. Candidates
+    are evaluated configural-only and filtered by all_config_passed before
+    the CFI -> TLI -> RMSEA cascade.
+    """
+    candidates_pool = list(current)
+    max_level_combo = len(current) - min_items
+    if max_level_combo < 1:
+        return None, None, None, None, None
+
+    for level in range(1, max_level_combo + 1):
+        n_combos = sum(1 for _ in combinations(candidates_pool, level))
+        print(f"  -- Ablation level {level} ({n_combos} combos) --")
+
+        passing = []
+        n_evaluated = 0
+        for combo in combinations(candidates_pool, level):
+            test_items = [i for i in current if i not in combo]
+
+            combo_label = combo if len(combo) > 1 else combo[0]
+            print(f"  Trying drop of {combo_label} -> {len(test_items)} items")
+            cand_results = _test_all_pairs_scalar(
+                whichscale, test_items, datasets, temp_path,
+                num_iter, cpus_to_use, max_level='configural',
+                parameterization=parameterization)
+            cand_row = _build_history_row_scalar(
+                iteration, 'ablation_candidate', test_items, combo_label,
+                cand_results, action='ablation_candidate_tested',
+                ablation_level=level)
+            cmc = cand_row['min_config_cfi']
+            cmt = cand_row['min_config_tli']
+            cmr = cand_row['max_config_rmsea']
+            acp = cand_row['all_config_passed']
+            history_rows.append(cand_row)
+            print(f"    min_cfi={cmc:.4f} min_tli={cmt:.4f} "
+                  f"max_rmsea={cmr:.4f} all_config_passed={acp}")
+
+            n_evaluated += 1
+            if acp:
+                passing.append((combo, cmc, cmt, cmr, acp))
+
+        if passing:
+            print(f"  Level {level}: {len(passing)} of {n_evaluated} combos "
+                  f"achieve 3-way configural invariance.")
+            best, reason, cfi_tc, tli_tc = _pick_by_cascade(
+                passing, cfi_tie_tolerance, tli_tie_tolerance)
+            return best[0], reason, level, cfi_tc, tli_tc
+
+        print(f"  Level {level}: no combo achieves 3-way configural invariance. "
+              f"Expanding to level {level+1}...")
+
+    return None, None, None, None, None
 
 
 # -----------------------------------------------------------------------------
@@ -284,34 +440,39 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
                                      metric_invariant_items,
                                      datasets, temp_path,
                                      num_iter, cpus_to_use,
-                                     marker_item=None,
                                      min_items=3,
                                      max_iter=None,
                                      cfi_tie_tolerance=DEFAULT_CFI_TIE_TOLERANCE,
                                      tli_tie_tolerance=DEFAULT_TLI_TIE_TOLERANCE,
-                                     parameterization="theta"):
+                                     parameterization="theta",
+                                     assume_metric_invariant=True):
     """
     Search for a 3-way scalar invariant subset starting from a metric-
     invariant core, by iteratively removing the item with the largest
-    aggregated permuted modification index. Handles regressions at lower
-    levels (configural, metric) defensively in case item removal causes
-    them to fail again.
+    aggregated permuted intercept modification index. Handles regressions
+    at lower levels defensively: configural regression triggers bounded
+    combinatorial ablation (marker ablatable, all_config_passed filter,
+    CFI -> TLI -> RMSEA cascade); metric regression triggers single-item
+    loading-MI removal.
 
     Parameters
     ----------
     whichscale : str
     metric_invariant_items : list[str]
-        The metric-invariant core from the upstream procedure.
+        The metric-invariant core from the upstream procedure (e.g. loaded
+        via ``load_metric_run``).
     datasets : dict
         pair label -> dataframe for each pairwise comparison.
-    marker_item : str or None
-        Item whose loading is fixed to 1 and intercept fixed to 0 (in the
-        reference group). Defaults to the first item in
-        metric_invariant_items, matching the original scale's marker.
     min_items : int
     max_iter : int or None
     cfi_tie_tolerance, tli_tie_tolerance : float
         Same semantics as in the metric procedure.
+    assume_metric_invariant : bool
+        If True (default), the first iteration skips the configural and
+        metric permutation tests, since the metric stepwise run already
+        verified them for exactly this item set on this data with the same
+        seeds. Later iterations (after any removal) always run full tests.
+        Set False to re-verify everything from scratch.
 
     Returns
     -------
@@ -320,19 +481,14 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
     history : pd.DataFrame
         One row per test (main or ablation candidate). Columns include
         per-pair config/metric/scalar pass-fail and p-values, aggregate
-        fit indices, removal decisions, and tied-count diagnostics.
-        removal_reason takes values in
-        {'cfi_max_min', 'tli_tiebreaker', 'rmsea_tiebreaker',
-         'metric_mi_worst', 'scalar_mi_worst', None}.
+        fit indices, ``lower_levels_assumed``, ``removed_items`` (tuple),
+        ``ablation_level``, and removal decisions. removal_reason takes
+        values in {'cfi_max_min', 'tli_tiebreaker', 'rmsea_tiebreaker',
+        'metric_mi_worst', 'scalar_mi_worst', None}.
     """
     print(f"\n{'='*60}\nSTEPWISE SCALAR: {whichscale.upper()}\n{'='*60}")
 
     current = list(metric_invariant_items)
-    if marker_item is None:
-        marker_item = current[0]
-    elif marker_item not in current:
-        raise ValueError(f"marker_item {marker_item!r} not in input items")
-
     removed = []
     history_rows = []
 
@@ -340,7 +496,8 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
         max_iter = len(current) - min_items
 
     for it in range(max_iter + 1):
-        print(f"\n--- Iteration {it}: {len(current)} items ---")
+        print(f"\n--- Iteration {it}: {len(current)} items "
+              f"(marker = {current[0]}) ---")
         print(f"Current: {current}")
 
         if len(current) < min_items:
@@ -351,12 +508,19 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
             })
             return None, removed, pd.DataFrame(history_rows)
 
-        # --- Test current set up to scalar ---
-        print("Testing current item set up to scalar...")
+        # Skip config/metric permutation tests only on the untouched core:
+        # the metric run verified exactly these items on this data.
+        skip_lower = assume_metric_invariant and it == 0 and not removed
+        if skip_lower:
+            print("Testing current item set (configural + metric assumed "
+                  "from completed metric run; scalar test only)...")
+        else:
+            print("Testing current item set up to scalar...")
         main_results = _test_all_pairs_scalar(whichscale, current, datasets,
                                               temp_path, num_iter, cpus_to_use,
                                               max_level='scalar',
-                                              parameterization=parameterization)
+                                              parameterization=parameterization,
+                                              skip_lower_tests=skip_lower)
 
         all_config = all(r['config_passed'] for r in main_results.values())
         all_metric = all(r['metric_passed'] is True
@@ -372,92 +536,60 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
             history_rows.append(row)
             return current, removed, pd.DataFrame(history_rows)
 
-        # --- Configural regression: CFI ablation ---
-        # This shouldn't happen since we started from a metric-invariant
-        # core (which already implies configural), but handle defensively
-        # in case item removal at scalar causes some pair to regress.
+        # --- Configural regression (defensive): combinatorial ablation ---
+        # Can't occur on a skip_lower iteration (config assumed True there);
+        # only reachable after an item removal has changed the set.
         if not all_config:
-            print("Configural regressed for at least one comparison; running "
-                  "CFI-based ablation (configural_only for candidates)...")
+            print("Configural regressed; running combinatorial ablation "
+                  "search (all items, incl. marker)...")
             row = _build_history_row_scalar(it, 'main', current, None,
                                             main_results,
                                             action='configural_ablation_starting')
             history_rows.append(row)
             main_row_idx = len(history_rows) - 1
 
-            candidates = [i for i in current if i != marker_item]
-            ablation_results = []
-            for cand in candidates:
-                test_items = [i for i in current if i != cand]
-                if len(test_items) < min_items:
-                    continue
-                print(f"  Trying drop of {cand} -> {len(test_items)} items")
-                cand_results = _test_all_pairs_scalar(
-                    whichscale, test_items, datasets, temp_path,
-                    num_iter, cpus_to_use, max_level='configural',
-                    parameterization=parameterization)
-                cand_row = _build_history_row_scalar(
-                    it, 'ablation_candidate', test_items, cand, cand_results,
-                    action='ablation_candidate_tested')
-                cmc = cand_row['min_config_cfi']
-                cmt = cand_row['min_config_tli']
-                cmr = cand_row['max_config_rmsea']
-                history_rows.append(cand_row)
-                print(f"    min_cfi={cmc:.4f} min_tli={cmt:.4f} "
-                      f"max_rmsea={cmr:.4f}")
-                if cmc is not None:
-                    ablation_results.append((cand, cmc, cmt, cmr))
+            best_combo, reason, level, cfi_tc, tli_tc = _search_combo_ablation_scalar(
+                whichscale, current, min_items, it,
+                cfi_tie_tolerance, tli_tie_tolerance, history_rows,
+                datasets, temp_path, num_iter, cpus_to_use,
+                parameterization=parameterization)
 
-            if not ablation_results:
-                print("  No viable ablation candidate. Stopping.")
+            if best_combo is None:
+                print("  No combo at any level achieves 3-way configural "
+                      "invariance. Stopping.")
+                history_rows[main_row_idx]['action'] = 'failed_no_combo_passes'
                 history_rows.append({
                     'iteration': it, 'phase': 'final',
                     'n_items': len(current), 'items': tuple(current),
-                    'action': 'failed_no_ablation_candidate',
+                    'action': 'failed_no_combo_passes',
                 })
                 return None, removed, pd.DataFrame(history_rows)
 
-            # CFI -> TLI -> RMSEA tiebreaker cascade (same as in metric procedure)
-            max_cfi = max(r[1] for r in ablation_results)
-            cfi_tied = [r for r in ablation_results
-                        if r[1] >= max_cfi - cfi_tie_tolerance]
-            cfi_tied_count = len(cfi_tied)
+            print(f"  -> Removing combo {best_combo} "
+                  f"(ablation_level={level}, reason={reason})")
+            history_rows[main_row_idx]['removed_items']   = tuple(best_combo)
+            history_rows[main_row_idx]['removal_reason']  = reason
+            history_rows[main_row_idx]['ablation_level']  = level
+            history_rows[main_row_idx]['cfi_tied_count']  = cfi_tc
+            history_rows[main_row_idx]['tli_tied_count']  = tli_tc
 
-            if cfi_tied_count == 1:
-                best = cfi_tied[0]; removal_reason = 'cfi_max_min'
-                tli_tied_count = None
-            else:
-                max_tli = max(r[2] for r in cfi_tied)
-                tli_tied = [r for r in cfi_tied
-                            if r[2] >= max_tli - tli_tie_tolerance]
-                tli_tied_count = len(tli_tied)
-                if tli_tied_count == 1:
-                    best = tli_tied[0]; removal_reason = 'tli_tiebreaker'
-                else:
-                    best = min(tli_tied, key=lambda r: r[3])
-                    removal_reason = 'rmsea_tiebreaker'
-
-            best_candidate = best[0]
-            print(f"  -> Removing {best_candidate} (reason={removal_reason})")
-            history_rows[main_row_idx]['removed_item']    = best_candidate
-            history_rows[main_row_idx]['removal_reason']  = removal_reason
-            history_rows[main_row_idx]['cfi_tied_count']  = cfi_tied_count
-            history_rows[main_row_idx]['tli_tied_count']  = tli_tied_count
-            removed.append(best_candidate)
-            current.remove(best_candidate)
+            for item in best_combo:
+                removed.append(item)
+                current.remove(item)
             continue
 
-        # --- Metric regression: loading MI removal ---
-        # Again shouldn't normally happen if we started metric-invariant,
-        # but defensively handle.
+        # --- Metric regression (defensive): single-item loading-MI removal ---
         if not all_metric:
-            print("Metric regressed; running loading-MI-based removal...")
+            print(f"Metric regressed; running loading-MI-based removal "
+                  f"(excluding current marker {current[0]})...")
             failing_mis = []
             for r in main_results.values():
                 if r['metric_passed'] is False and r['metric_item_mis']:
                     failing_mis.append(r['metric_item_mis'])
 
-            worst, aggregated = find_worst_item(failing_mis, marker_item, current)
+            worst, aggregated = find_worst_item(failing_mis,
+                                                excluded_item=current[0],
+                                                current_items=current)
             if worst is None:
                 print("  Could not identify worst loading-MI item. Stopping.")
                 row = _build_history_row_scalar(it, 'main', current, None,
@@ -475,7 +607,7 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
             row = _build_history_row_scalar(it, 'main', current, None,
                                             main_results,
                                             action='metric_mi_removal',
-                                            removed_item=worst,
+                                            removed_items=(worst,),
                                             removal_reason='metric_mi_worst',
                                             mis_used=aggregated)
             history_rows.append(row)
@@ -484,13 +616,16 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
             continue
 
         # --- Scalar failure: intercept MI removal (the main case) ---
-        print("Scalar failed; running intercept-MI-based removal...")
+        print(f"Scalar failed; running intercept-MI-based removal "
+              f"(excluding current marker {current[0]})...")
         failing_mis = []
         for r in main_results.values():
             if r['scalar_passed'] is False and r['scalar_item_mis']:
                 failing_mis.append(r['scalar_item_mis'])
 
-        worst, aggregated = find_worst_item(failing_mis, marker_item, current)
+        worst, aggregated = find_worst_item(failing_mis,
+                                            excluded_item=current[0],
+                                            current_items=current)
         if worst is None:
             print("  Could not identify worst intercept-MI item. Stopping.")
             row = _build_history_row_scalar(it, 'main', current, None,
@@ -507,7 +642,7 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
 
         row = _build_history_row_scalar(it, 'main', current, None, main_results,
                                         action='scalar_mi_removal',
-                                        removed_item=worst,
+                                        removed_items=(worst,),
                                         removal_reason='scalar_mi_worst',
                                         mis_used=aggregated)
         history_rows.append(row)
@@ -521,3 +656,47 @@ def do_three_way_cfa_stepwise_scalar(whichscale,
         'action': 'failed_max_iter',
     })
     return None, removed, pd.DataFrame(history_rows)
+
+
+# -----------------------------------------------------------------------------
+# Convenience wrapper: load a completed metric run and continue to scalar.
+# -----------------------------------------------------------------------------
+def do_stepwise_scalar_from_metric_run(whichscale, cfa_dir,
+                                       datasets, temp_path,
+                                       num_iter, cpus_to_use,
+                                       **kwargs):
+    """Load the metric-invariant core for ``whichscale`` from a completed
+    metric stepwise run (see ``load_metric_run``) and continue searching
+    for a scalar-invariant core from there.
+
+    Any additional keyword arguments (min_items, max_iter, tolerances,
+    parameterization, assume_metric_invariant) are forwarded to
+    ``do_three_way_cfa_stepwise_scalar``.
+
+    Returns
+    -------
+    final_items : list[str] or None
+        None either when the metric run found no invariant core for this
+        scale (nothing to continue from) or when the scalar search failed.
+    removed_in_order : list[str]
+    history : pd.DataFrame
+        A one-row DataFrame with action 'no_metric_core' when the metric
+        run had no core for this scale; otherwise the scalar history.
+    """
+    metric_core, _metric_history = load_metric_run(cfa_dir, whichscale)
+
+    if metric_core is None:
+        print(f"[{whichscale}] Metric run found no invariant core; "
+              f"nothing to continue from.")
+        history = pd.DataFrame([{
+            'iteration': 0, 'phase': 'final', 'n_items': 0,
+            'items': tuple(), 'action': 'no_metric_core',
+        }])
+        return None, [], history
+
+    print(f"[{whichscale}] Loaded metric-invariant core "
+          f"({len(metric_core)} items): {metric_core}")
+
+    return do_three_way_cfa_stepwise_scalar(
+        whichscale, metric_core, datasets, temp_path,
+        num_iter, cpus_to_use, **kwargs)

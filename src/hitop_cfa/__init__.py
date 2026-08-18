@@ -15,5 +15,6 @@ from .stepwise_metric import (cfa_test_metric_with_mi,
                               extract_item_mis_from_metric, find_worst_item)
 from .stepwise_scalar import (cfa_test_scalar_with_mi,
                               do_three_way_cfa_stepwise_scalar,
-                              extract_item_mis_from_scalar)
+                              extract_item_mis_from_scalar,
+                              do_stepwise_scalar_from_metric_run)
 from .exhaustive import exhaustive_cfa_ablations
