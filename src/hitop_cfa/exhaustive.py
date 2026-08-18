@@ -12,9 +12,13 @@ from .fit import cfa_helper_func, cfa_levels
 
 def exhaustive_cfa_ablations(whichscale, whichcfa, howmanyitems, orig_items,
                              datasets, temp_path, num_iter, cpus_to_use,
-                             parameterization="theta", ordered=None):
+                             parameterization="theta"):
     """Check all combinations of `howmanyitems` items for `whichscale`,
     reporting the combinations that are invariant in every dataset pair.
+
+    All models go through the measEq (Wu-Estabrook) ladder in
+    cfa_helper_func; ``whichcfa`` is the highest level tested
+    ('thresholds', 'metric', 'scalar', or 'strict').
 
     Parameters
     ----------
@@ -30,7 +34,8 @@ def exhaustive_cfa_ablations(whichscale, whichcfa, howmanyitems, orig_items,
     flag_found_inv_in_all_pairs = False
     successful_combinations = {}
 
-    doing_metric, doing_scalar, doing_strict = cfa_levels(whichcfa)
+    # validate the requested level up front
+    cfa_levels(whichcfa)
 
     mdl = orig_items[whichscale]
     print("\n")
@@ -56,20 +61,17 @@ def exhaustive_cfa_ablations(whichscale, whichcfa, howmanyitems, orig_items,
         pair_ps = {}
         for pair, data in datasets.items():
             print(f'\n -----> {pair} <----- ')
-            flag_metric, pconfig, pmetric, pscalar, pstrict = cfa_helper_func(
+            flag_metric, pconfig, pthresholds, pmetric, pscalar, pstrict = cfa_helper_func(
                 scalename=whichscale,
                 list_of_items=com,
-                do_metric=doing_metric,
-                do_scalar=doing_scalar,
-                do_strict=doing_strict,
                 mydata_python=data,
                 mydata_temp_path=temp_path,
                 num_iter=num_iter,
                 cpus_to_use=cpus_to_use,
-                parameterization=parameterization,
-                ordered=ordered)
+                max_level=whichcfa,
+                parameterization=parameterization)
             pair_flags[pair] = flag_metric
-            pair_ps[pair] = [pconfig, pmetric, pscalar, pstrict]
+            pair_ps[pair] = [pconfig, pthresholds, pmetric, pscalar, pstrict]
 
         if all(pair_flags.values()):
             print(f"Combination {count_comb} passes 3-way invariance!")
