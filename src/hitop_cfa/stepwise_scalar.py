@@ -101,6 +101,11 @@ def load_metric_run(cfa_dir, scale):
         summary_path = cfa_dir / summary_name
         if summary_path.exists():
             summary = pd.read_pickle(summary_path)
+            # an empty metric run (no scale failed metric) writes an empty
+            # DataFrame with no columns; treat it like "scale not found"
+            # so callers get FileNotFoundError, not KeyError
+            if 'scale' not in summary.columns:
+                continue
             row = summary[summary['scale'] == scale]
             if len(row) == 0:
                 continue
