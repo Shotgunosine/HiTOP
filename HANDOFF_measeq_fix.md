@@ -525,3 +525,93 @@ grouping in NB_4, instrument-total names, display-name exceptions).
 Run-order dependency made explicit: the exploratory notebook's derived
 lists read orig_cfa_res.csv / stepwise_scalar.pkl, so NB_2_cfa_as_reg's
 baseline and scalar-continuation sections must run first.
+
+## PROGRESS -- round 4 (2026-08-18): overnight-readiness hardening + dress rehearsal
+
+Author asked for maximum assurance the overnight runs succeed. Two
+tracks: latent-bug hunting/hardening, and a full DRESS REHEARSAL that
+executes patched copies of all six production notebooks end-to-end.
+
+### Latent bugs found and fixed (commits edf4407, f6a498e)
+1. load_metric_run raised KeyError (not FileNotFoundError) on an empty
+   metric summary pickle -- which happens if NO scale fails metric under
+   the corrected models -- bypassing the notebook's fallback handler.
+2. astype(float, errors='ignore') is a silent no-op under pandas 3
+   (this env is 3.0.3): the baseline p columns stayed strings. Replaced
+   with explicit pd.to_numeric.
+3. Stale review-note (scale, ssix) pairs merge into exhaustive.pkl as
+   rows with exhaustive_choice=True but no item set and crashed NB_3's
+   sum-score loops. NB_3 now drops them with a loud warning.
+4. float('NA') in the exploratory manual-inattention cell would crash
+   mid-notebook if any level failed; now nan-tolerant. Empty exhaustive
+   results (zero successes) now produce schema-complete DataFrames so
+   the review-note merges survive.
+5. NON-CONVERGENT candidate models crash permuteMeasEq ("fit measures
+   not available if model did not converge") and the retry fallbacks
+   can't help (not a fork crash). FOUND LIVE by the rehearsal: the
+   3-item insomnia subset (hitop160, hitop254, hitop261) does not
+   converge at configural on the val_en pair. New
+   measeq.fit_is_converged() is checked after EVERY fit in
+   cfa_helper_func and both stepwise testers; a non-convergent model is
+   recorded as a failed level (p = NaN) and the search moves on.
+
+### Overnight fault tolerance in NB_2_cfa_as_reg (commit edf4407)
+- All four long loops (baseline, stepwise metric, scalar continuation,
+  strict report) wrap per-scale work in try/except; failures are
+  printed and appended with tracebacks to cfa_dir/run_errors.log and
+  the run continues.
+- Baseline and strict report persist incrementally
+  (orig_cfa_res_in_progress.csv, final_cores_strict_report_in_progress
+  .csv), so a late crash cannot lose completed scales. Stepwise loops
+  already had in-progress pickles.
+- The scalar loop's full-scale fallback now requires the scale to be a
+  VERIFIED baseline metric passer; a scale whose upstream stage errored
+  gets an explicit 'upstream_error' row, never a silently assumed core.
+  A scalar-search exception falls back to the verified metric core with
+  an 'error' flag (carried through NB_3 for review).
+- A final run-summary cell prints core counts and every recorded error.
+
+### Dress rehearsal (notebooks/rehearse_overnight.py, commit 9ac4143)
+Executes PATCHED COPIES of the production notebooks in run order with
+num_iter=50, 3 small scales (insomnia, appetite_loss, shame_guilt),
+other scales restricted to gad_sum, NB_4 perms/boots=20, and all output
+paths redirected to data/rehearsal/ (production data untouched).
+Re-run any time: `cd notebooks && pixi run python rehearse_overnight.py`.
+
+Result (second run, after the convergence-guard fix): PASSED.
+  NB_2_cfa_as_reg 2.5 min / NB_2_cfa_exploratory 2.1 min /
+  NB_invariance_plot 0.1 / NB_3_ICC 0.3 / NB_icc_plots 0.1 /
+  NB_4_convdiv 0.1 min. All 14 artifact hand-offs present; no
+  run_errors.log. The mini final-cores exercised ALL THREE core_level
+  outcomes through the full chain: insomnia -> scalar core
+  [hitop160, hitop254, hitop268]; shame_guilt -> metric fallback;
+  appetite_loss -> no core (3-item scale failed a level; no search
+  space at min_items=3) -- NB_3 excluded it and NB_4's resolver fell
+  back to the full scale with the printed enriched-only warning.
+A separate synthetic-artifact pre-test also executed NB_invariance_plot
+/NB_3/NB_icc_plots/NB_4 against fabricated pickles covering the nasty
+edges (orphan review notes, NaN levels, every core_level case): PASSED.
+
+### Runtime advisory for the real overnight run
+Mini NB_2 (3 small scales, 50 iters) = 2.5 min. The real run is 14
+scales (up to 10 items), 1000 iters, and the new ladder runs up to 5
+permutation tests per scale-pair (the old pipeline ran at most 4, and
+effectively 2 for most scales). Extrapolation is rough (larger models
+fit slower; the stepwise/ablation search space dominates for 10-item
+scales), but NB_2 alone could plausibly take on the order of 8-15 h.
+Mitigations already in place: everything persists incrementally, so
+progress can be checked mid-run (watch orig_cfa_res_in_progress.csv,
+stepwise_in_progress.pkl, stepwise_scalar_in_progress.pkl grow) and the
+notebook can be split across nights at any section boundary -- the
+scalar continuation resumes from the metric pickles by design. Also
+note: a permuteMeasEq LAPACK fork crash triggers the serial fallback,
+which at 1000 iters is ~10x slower for that one test (pre-existing
+behavior, now at least survivable).
+
+### Leftovers to know about
+- Rehearsal artifacts: data/rehearsal/, data/rehearsal2/ (synthetic
+  pre-test), notebooks/zz_rehearsal_*.ipynb (executed copies with
+  outputs, gitignored) -- inspect or delete freely.
+- The rehearsal overwrote two stale pre-measEq scratch logs in
+  notebooks/log/ (mylog_3wayCFA_origscales..., mylog_3wayCFA_lookingforinv...);
+  both were gitignored scratch from the deleted-results era.
