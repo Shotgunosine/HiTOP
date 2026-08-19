@@ -749,3 +749,20 @@ streams by worker count, so permutation p-values are bit-identical to
 the local pipeline ONLY at 14 workers. The runner defaults to
 --cpus 14 and the sbatch template requests exactly 14 CPUs; more cores
 would be statistically valid but not reproducible against local runs.
+
+## PROGRESS -- round 8 (2026-08-19): GP-vs-EN two-way variant notebook
+
+Author request: notebooks/NB_2_as_reg_gp_en.ipynb searches for scalar
+invariance between the general-population and enriched samples only
+(single gp_en pair; validation sample unused). Derived programmatically
+from NB_2_cfa_as_reg so all hardening carries over (fault tolerance,
+incremental persistence, derived failing lists, scalar continuation
+with metric fallback, strict report, run summary). All outputs isolated
+in data/cfa_gp_en/ (histories, stepwise/scalar pickles, strict report,
+run_errors.log) -- nothing touches the 3-way pipeline's data/cfa/.
+Distinct log names (mylog_2wayCFA_gp_en_*). Validated by a sandboxed
+end-to-end execution (3 small scales, 50 iters): all stages ran, all
+three got gp_en scalar cores, strict report intact, no errors.
+Downstream note: NB_3/NB_4 consume data/cfa (the 3-way results) only;
+the gp_en results are a separate analysis until the author decides how
+to consolidate them.
