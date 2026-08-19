@@ -51,14 +51,21 @@ WU_ESTABROOK_LEVELS = [
     ('strict',     ('thresholds', 'loadings', 'intercepts', 'residuals')),
 ]
 
-# What is NEW at each level relative to the previous -- this is what gets
-# passed to permuteMeasEq's ``param`` argument so the max-MI distribution
-# is computed over the constraints the level actually added.
+# What is NEW at each level relative to the previous -- passed to
+# permuteMeasEq's ``param`` argument so the max-MI distribution is computed
+# over the constraints the level actually added. None means the level's
+# delta test runs as the param-free OMNIBUS permutation: at scalar/strict
+# the Wu-Estabrook models impose invariance by FIXING parameters back
+# (group-2 intercepts to 0, group-2 residual variances to 1) rather than by
+# "==" equality constraints, so there is nothing for permuteMeasEq's MI
+# machinery to test (its MI table is empty and semTools' summary() errors).
+# Per-item intercept MIs for the scalar level come from lavaan::modindices
+# on the scalar fit instead (see stepwise_scalar.extract_item_mis_from_scalar).
 LEVEL_NEW_PARAMS = {
     'thresholds': ('thresholds',),
     'metric':     ('loadings',),
-    'scalar':     ('intercepts',),
-    'strict':     ('residuals',),
+    'scalar':     None,
+    'strict':     None,
 }
 
 

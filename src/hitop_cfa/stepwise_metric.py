@@ -57,7 +57,7 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                   r_fit_name='fit_config')
     out_config = permute_measeq_with_retry(num_iter, cpus_to_use,
                                            con=fit_config)
-    config_p = float(extract_p(out_config))
+    config_p = extract_p(out_config)
     config_passed_primary = (config_p >= 0.05)
     config_passed_secondary, cfi, tli, rmsea = check_secondary_criteria(fit_config)
     config_passed = config_passed_primary or config_passed_secondary
@@ -90,7 +90,7 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
         num_iter, cpus_to_use, uncon=fit_config, con=fit_thresholds,
         param="thresholds")
     ro.globalenv['out_thresholds'] = out_thresholds
-    thresholds_p = float(extract_p(out_thresholds))
+    thresholds_p = extract_p(out_thresholds)
     thresholds_passed = (thresholds_p >= 0.05)
     result['thresholds_p'] = thresholds_p
     result['thresholds_passed'] = thresholds_passed
@@ -110,7 +110,7 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
         num_iter, cpus_to_use, uncon=fit_thresholds, con=fit_metric,
         param="loadings")
     ro.globalenv['out_metric'] = out_metric
-    metric_p = float(extract_p(out_metric))
+    metric_p = extract_p(out_metric)
     metric_passed = (metric_p >= 0.05)
     result['metric_p'] = metric_p
     result['metric_passed'] = metric_passed

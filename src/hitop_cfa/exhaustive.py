@@ -7,7 +7,7 @@ formulas come from the caller's `orig_items` dict instead of a hardcoded copy.
 import math
 from itertools import combinations
 
-from .fit import cfa_helper_func, cfa_levels
+from .fit import cfa_helper_func, cfa_levels, nafloat
 
 
 def exhaustive_cfa_ablations(whichscale, whichcfa, howmanyitems, orig_items,
@@ -70,7 +70,14 @@ def exhaustive_cfa_ablations(whichscale, whichcfa, howmanyitems, orig_items,
                 cpus_to_use=cpus_to_use,
                 max_level=whichcfa,
                 parameterization=parameterization)
-            pair_flags[pair] = flag_metric
+            # a combination succeeds at the REQUESTED level (whichcfa), not
+            # merely at metric (the pre-measEq code gated on the metric
+            # flag even for scalar searches). nafloat maps 'NA' (level
+            # never reached) to NaN, and NaN >= 0.05 is False.
+            level_ps = dict(zip(
+                ('configural', 'thresholds', 'metric', 'scalar', 'strict'),
+                (pconfig, pthresholds, pmetric, pscalar, pstrict)))
+            pair_flags[pair] = bool(nafloat(level_ps[whichcfa]) >= 0.05)
             pair_ps[pair] = [pconfig, pthresholds, pmetric, pscalar, pstrict]
 
         if all(pair_flags.values()):

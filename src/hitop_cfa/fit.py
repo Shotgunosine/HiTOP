@@ -122,13 +122,23 @@ def print_problematic_items(invariance_output):
 
 
 def extract_p(invariance_output):
+    """Permutation p-value for the chi-squared AFI from a permuteMeasEq
+    object, read directly from its AFI.pval slot (the exact value that
+    summary() prints, unrounded).
+
+    This replaces the old summary()-text parse, which (a) only matched the
+    permutation line by the accident of R grep's case sensitivity
+    (lowercase "chisq" vs the parametric "Chisq diff" line) and (b) died
+    outright whenever summary() itself errored (semTools' MI section
+    crashes on models whose tested parameters have no equality
+    constraints, e.g. Wu-Estabrook scalar/strict). Note the old parse
+    returned summary()'s ROUNDED display string; this returns the exact
+    value, which can differ at pass/fail boundaries.
+
+    Returns a float.
+    """
     ro.globalenv['invariance_output'] = invariance_output
-    ro.r("myoutput <- capture.output(summary(invariance_output))")
-    ro.r("stringid <- grep(\"chisq\", myoutput)")
-    ro.r('myrline <- myoutput[stringid]')
-    mypline = ro.r('myrline')[0]
-    my_p = mypline.split()[-1]
-    return(my_p)
+    return float(ro.r('invariance_output@AFI.pval["chisq"]')[0])
 
 
 def nafloat(x):
@@ -140,24 +150,20 @@ def nafloat(x):
 
 
 def check_secondary_criteria(fit_config):
+    """Secondary configural fit criteria (robust CFI/TLI/RMSEA) via
+    lavaan::fitMeasures.
+
+    Previously parsed the "Robust ... CFI/TLI/RMSEA" lines out of
+    summary() text; fitMeasures returns the same quantities exactly (the
+    text showed them rounded to 3 decimals, so borderline scales can
+    differ from the old rounded behavior). Comparisons against NaN are
+    False, so a missing index fails the criteria, as before.
+    """
     Criteria_passed = False
     ro.globalenv['fit_config'] = fit_config
-    ro.r("myoutputconfig <- capture.output(summary(fit_config, fit.measures=TRUE))")
-    ro.r("stringid_cfi <- grep(\"Robust.*CFI\", myoutputconfig)")
-    ro.r("cfi_line <- myoutputconfig[stringid_cfi]")
-    cfiline = ro.r('cfi_line')[0]
-    my_cfi = cfiline.split()[-1]
-    my_cfi = nafloat(my_cfi)
-    ro.r("stringid_tli <- grep(\"Robust.*TLI\", myoutputconfig)")
-    ro.r("tli_line <- myoutputconfig[stringid_tli]")
-    tliline = ro.r('tli_line')[0]
-    my_tli = tliline.split()[-1]
-    my_tli = nafloat(my_tli)
-    ro.r("stringid_rmsea <- grep(\"Robust.*RMSEA\", myoutputconfig)")
-    ro.r("rmsea_line <- myoutputconfig[stringid_rmsea]")
-    myrmsealine = ro.r('rmsea_line')[0]
-    my_rmsea = myrmsealine.split('\n')[0].split()[-1]
-    my_rmsea = nafloat(my_rmsea)
+    vals = ro.r('lavaan::fitMeasures(fit_config, '
+                'c("cfi.robust", "tli.robust", "rmsea.robust"))')
+    my_cfi, my_tli, my_rmsea = (float(v) for v in vals)
     if (my_cfi > 0.95) and (my_tli > 0.95) and (my_rmsea < 0.06):
         Criteria_passed = True
     return (Criteria_passed, my_cfi, my_tli, my_rmsea)
@@ -198,8 +204,9 @@ def cfa_helper_func(scalename, list_of_items, mydata_python, mydata_temp_path,
     # supported). assert_level_adds_df runs before every delta test.
     #
     # Returns (flag_passed_metric, config_p, thresholds_p, metric_p,
-    # scalar_p, strict_p); p-values are the strings parsed by extract_p,
-    # 'NA' for untested levels.
+    # scalar_p, strict_p); p-values are floats (extract_p reads the exact
+    # permutation p from the permuteMeasEq object), with the string 'NA'
+    # for untested levels.
 
     # SETTING THE SEED HERE, JUST TO BE SURE IT IS SET TO THE SAME THING EVERY TIME I RUN THIS HELPER FUNCTION
     set_seeds(12345)
@@ -221,22 +228,26 @@ def cfa_helper_func(scalename, list_of_items, mydata_python, mydata_temp_path,
                                            con=fit_config)
     config_p = extract_p(out_config)
     ps['configural'] = config_p
-    if float(config_p) >= 0.05:
-        print('CONFIG INVARIANT chisq p = ' + str(config_p))
+    if config_p >= 0.05:
+        print(f'CONFIG INVARIANT chisq p = {round(config_p, 4)}')
         flag_passed_config = True
     else:
         (flag_passed_config, my_cfi, my_tli, my_rmsea) = check_secondary_criteria(fit_config)
         if flag_passed_config:
-            print('CONFIG chisq p = ' + str(config_p))
-            print('PASSED SECONDARY CRITERIA WITH CFI = ' + str(my_cfi) + ' TLI = ' + str(my_tli) + ' RMSEA = ' + str(my_rmsea))
+            print(f'CONFIG chisq p = {round(config_p, 4)}')
+            print(f'PASSED SECONDARY CRITERIA WITH CFI = {round(my_cfi, 4)} TLI = {round(my_tli, 4)} RMSEA = {round(my_rmsea, 4)}')
         else:
-            print('CONFIG chisq p = ' + str(config_p))
-            print('FAILED SECONDARY CRITERIA WITH CFI = ' + str(my_cfi) + ' TLI = ' + str(my_tli) + ' RMSEA = ' + str(my_rmsea))
-            print('CONFIG INVARIANT NOT PASSED, chisq p = ' + str(config_p))
+            print(f'CONFIG chisq p = {round(config_p, 4)}')
+            print(f'FAILED SECONDARY CRITERIA WITH CFI = {round(my_cfi, 4)} TLI = {round(my_tli, 4)} RMSEA = {round(my_rmsea, 4)}')
+            print(f'CONFIG INVARIANT NOT PASSED, chisq p = {round(config_p, 4)}')
 
     # Climb the ladder one level at a time; each level is only tested if the
     # previous one passed. permuteMeasEq's param is the constraints the level
-    # NEWLY adds (thresholds / loadings / intercepts / residuals).
+    # NEWLY adds where those are equality constraints (thresholds/loadings);
+    # at scalar/strict the W&E models FIX parameters back instead, so param
+    # is unusable there (no constraints for the MI machinery; semTools'
+    # summary would crash) and the delta test runs as the param-free
+    # omnibus permutation.
     if flag_passed_config:
         prev_level = 'configural'
         prev_fit = fit_config
@@ -247,21 +258,25 @@ def cfa_helper_func(scalename, list_of_items, mydata_python, mydata_temp_path,
             assert_level_adds_df(f'fit_{prev_level}', f'fit_{level}',
                                  prev_level, level)
             new_params = LEVEL_NEW_PARAMS[level]
-            param = (new_params[0] if len(new_params) == 1
-                     else ro.StrVector(list(new_params)))
+            permute_kwargs = {}
+            if new_params is not None:
+                permute_kwargs['param'] = (
+                    new_params[0] if len(new_params) == 1
+                    else ro.StrVector(list(new_params)))
             out_level = permute_measeq_with_retry(
                 num_iter, cpus_to_use, uncon=prev_fit, con=fit_level,
-                param=param)
+                **permute_kwargs)
             level_p = extract_p(out_level)
             ps[level] = level_p
-            if float(level_p) >= 0.05:
-                print(f'{_LEVEL_PRINT[level]} INVARIANT chisq p = {level_p}')
+            if level_p >= 0.05:
+                print(f'{_LEVEL_PRINT[level]} INVARIANT chisq p = '
+                      f'{round(level_p, 4)}')
                 if level == 'metric':
                     flag_passed_metric = True
                 prev_level, prev_fit = level, fit_level
             else:
                 print(f'{_LEVEL_PRINT[level]} INVARIANT NOT PASSED, '
-                      f'chisq p = {level_p}')
+                      f'chisq p = {round(level_p, 4)}')
                 break
 
     # levels never reached (ladder stopped early or max_level below them)
