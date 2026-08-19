@@ -809,3 +809,26 @@ and scalar stages fresh at 50 iters, no errors.
 - Six pipeline variants now exist (3-way, gp_en, gp_val, en_val,
   other_gp_en, plus the exploratory exhaustive); each owns its output
   dir; pipeline_status.py works on any of them.
+
+## PROGRESS -- round 10 (2026-08-19): wave-comparison notebooks for the other measures
+
+Author request: four more stepwise pipelines for PHQ/GAD/BAARS using the
+recontact wave. Data fact discovered en route: the gridall_full files
+ARE the recontact cohort -- every row has both waves (GP n=398,
+EN n=255), smaller than the grid1st samples used by the main pipelines.
+Notebooks (each derived from NB_2_cfa_as_reg_other_gp_en; outputs
+isolated per notebook in data/cfa_other_{tag}/; wave-2 frames take the
+*_recontact item columns renamed to plain ids with an explicit
+whichdata group label; self-resuming baselines):
+  - NB_2_cfa_as_reg_other_gp1_gp2 (GP wave1 vs GP wave2)  [PAIRED]
+  - NB_2_cfa_as_reg_other_en1_en2 (EN wave1 vs EN wave2)  [PAIRED]
+  - NB_2_cfa_as_reg_other_gp1_en2 (GP wave1 vs EN wave2)  [independent]
+  - NB_2_cfa_as_reg_other_gp2_en1 (GP wave2 vs EN wave1)  [independent]
+The two within-sample notebooks compare the SAME subjects across waves;
+their intros carry a prominent caveat that multigroup CFA and the
+permutation test treat groups as independent, so those runs test
+exchangeability of the wave label (parameter stability over time)
+rather than a standard two-sample contrast (test-retest reliability
+proper lives in NB_3's ICCs). Sandbox executions (2 BAARS subscales,
+50 iters) of gp1_gp2 and gp2_en1: PASSED end-to-end with the expected
+group sizes (398/398, 398/255), full-set scalar cores, no errors.
