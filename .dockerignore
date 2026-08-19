@@ -1,0 +1,7 @@
+.git
+.pixi
+data
+notebooks/log
+notebooks/zz_rehearsal_*.ipynb
+*.zip
+crashes

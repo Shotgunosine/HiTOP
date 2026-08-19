@@ -1,0 +1,32 @@
+# Apptainer/Singularity definition -- builds the same environment as
+# hpc/Dockerfile without needing Docker. Build FROM THE REPO ROOT:
+#     apptainer build hitop-cfa.sif hpc/hitop_cfa.def
+# (If your cluster disallows local builds, build the Docker image on any
+# machine with Docker and convert:  apptainer build hitop-cfa.sif \
+#     docker-daemon://hitop-cfa:latest )
+Bootstrap: docker
+From: ghcr.io/prefix-dev/pixi:0.69.0
+
+%files
+    pixi.toml /opt/hitop/pixi.toml
+    pixi.lock /opt/hitop/pixi.lock
+    pyproject.toml /opt/hitop/pyproject.toml
+    src /opt/hitop/src
+    hpc/install_r_libraries.R /opt/hitop/hpc/install_r_libraries.R
+    notebooks/run_exhaustive_scale.py /opt/hitop/notebooks/run_exhaustive_scale.py
+    notebooks/exploratory_status.py /opt/hitop/notebooks/exploratory_status.py
+
+%post
+    cd /opt/hitop
+    pixi install --locked
+    pixi run Rscript hpc/install_r_libraries.R
+    pixi clean cache --yes || true
+
+%environment
+    export OMP_NUM_THREADS=1
+    export OPENBLAS_NUM_THREADS=1
+    export MKL_NUM_THREADS=1
+
+%runscript
+    cd /opt/hitop/notebooks
+    exec pixi run --manifest-path /opt/hitop/pixi.toml python "$@"

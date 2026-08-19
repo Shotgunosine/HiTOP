@@ -710,3 +710,42 @@ Rough expectation with caps+abandon+screen at 1000 iters: small scales
 in minutes-to-an-hour total; worst case remains the 10-item scales if
 no subset passes until deep sizes (order 10-20 h each), but the search
 is now resumable at combination granularity.
+
+## PROGRESS -- round 7 (2026-08-19): containerized HPC path for the exhaustive searches
+
+Author request: run the larger exhaustive searches on HPC. Delivered
+(commit below); the container IMAGE itself was NOT built here (no
+docker/apptainer on this machine) -- build it per HPC.md and run the
+verification cross-check before trusting it.
+
+- pixi.toml/pixi.lock: linux-64 added and solved; the existing
+  osx-arm64/osx-64 sections are byte-identical (0/213 entries changed),
+  and the linux-64 solve pins r-base 4.2.3 / rpy2 3.5.1 / python 3.11,
+  matching the local pipeline (pandas 3.0.5 vs local 3.0.3 -- patch-
+  level drift, acceptable).
+- hpc/Dockerfile + hpc/hitop_cfa.def (Apptainer, buildable without
+  Docker): pixi 0.69.0 base, `pixi install --locked`, then
+  hpc/install_r_libraries.R installs pinned lavaan 0.7-2 and the
+  patched semTools fork @db294f2 with build-time version assertions.
+  BLAS pinned to 1 thread in the image. Data is NOT baked; bind-mount.
+- src/hitop_cfa/scales.py: ORIG_ITEMS / OTHER_SCALES formulas as the
+  single source for headless runs (the notebooks keep their own copies
+  -- keep in sync; future cleanup could point the notebooks here).
+- notebooks/run_exhaustive_scale.py: headless per-scale entry point
+  (unit of HPC parallelism). Same machinery and progress-pickle
+  convention as the notebook; per-scale temp csv so array tasks sharing
+  a cfa dir never collide. Tested locally: fresh run + resume
+  short-circuit both reproduce the known insomnia result.
+- hpc/exhaustive_array.sbatch: SLURM array template (one task per
+  scale, --cpus-per-task=14).
+- HPC.md: build / verify / ship data / run / monitor / bring results
+  home. The transfer currency is cfa/exhaustive_progress_{scale}.pkl:
+  copied back into local data/cfa, the exploratory notebook
+  short-circuits every HPC-completed scale and regenerates its log
+  lines, so the parse/consolidation pipeline is unchanged.
+
+REPRODUCIBILITY NOTE (important): permuteMeasEq splits its L'Ecuyer RNG
+streams by worker count, so permutation p-values are bit-identical to
+the local pipeline ONLY at 14 workers. The runner defaults to
+--cpus 14 and the sbatch template requests exactly 14 CPUs; more cores
+would be statistically valid but not reproducible against local runs.
