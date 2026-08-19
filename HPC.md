@@ -35,7 +35,7 @@ Deterministic cross-check against the laptop (same seeds, same worker
 count -> same permutation draws). Use your real data path (on Biowulf,
 /data/$USER/... is auto-bound into the container):
 
-    apptainer run hitop-cfa.sif run_exhaustive_scale.py insomnia \
+    apptainer run -B /data/MLDSST hitop-cfa.sif run_exhaustive_scale.py insomnia \
         --num-iter 25 --cpus 14 \
         --data-dir /data/MLDSST/$USER/hitop/scalar/data/finaldata --cfa-dir /tmp/check
     # run the identical command locally (pixi run python ...) and compare
@@ -73,8 +73,12 @@ test is only bit-identical to the local pipeline at 14 workers. More
 cores would still be valid tests, just not reproducible against the
 laptop runs. The template also sets `--threads-per-core=1`, which makes
 the 14 requested CPUs 14 physical cores -- one per worker, no
-hyperthread sharing -- without changing the worker count (or the
-results).
+hyperthread sharing -- and `--constraint=e9454|e7543` to land on the
+modern AMD EPYC nodes (per-core speed sets the pace for the serial R
+workers; Biowulf's large Broadwell fleet is ~1.5-2x slower per core).
+Neither changes the worker count or the results. Expect roughly 1.5-2x
+the laptop's per-scale wall time on the EPYCs -- offset by the scales
+running concurrently.
 
 Search behavior is identical to the exploratory notebook
 (`exhaustive_search_scale`): val_gp-first early abandon, the calibrated

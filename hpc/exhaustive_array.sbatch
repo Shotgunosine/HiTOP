@@ -11,6 +11,7 @@
 #SBATCH --job-name=hitop-exh
 #SBATCH --cpus-per-task=14
 #SBATCH --threads-per-core=1
+#SBATCH --constraint=e9454|e7543
 #SBATCH --mem=16g
 #SBATCH --time=2-00:00:00
 #SBATCH --output=logs/exh_%A_%a.out
@@ -21,6 +22,11 @@
 # --threads-per-core=1 makes --cpus-per-task=14 mean 14 PHYSICAL cores
 # (no hyperthread sharing), so each of the 14 workers gets a full core;
 # worker count is unchanged, so results stay bit-identical.
+# --constraint=e9454|e7543 pins the jobs to the modern AMD EPYC nodes:
+# each worker is a serial R process, so per-core speed sets the pace, and
+# the default (mostly Broadwell E5-2680v4) fleet is ~1.5-2x slower per
+# core than the EPYCs. Results are hardware-independent; only speed
+# differs.
 
 SCALES=(anhedonic_depression social_anxiety well_being)
 SIF=${SIF:-hitop-cfa.sif}
