@@ -382,3 +382,104 @@ Warnings observed:
   launch the overnight runs before that decision; the baseline
   (NB_2_cfa_as_reg cell 'strict' ladder) would also crash at scalar for
   any scale that reaches it.
+
+## PROGRESS -- round 2 (2026-08-18, after author decisions)
+
+AUTHOR DECISIONS (recorded): finding-B option 1 -- scalar/strict delta
+tests via param-free omnibus permutation, scalar removal via
+lavaan::modindices() group-2 intercept MIs; extract_p fixed by reading
+the permuteMeasEq object directly; check_secondary_criteria converted to
+fitMeasures; NB_3's cores workflow rewired now with HiTOP cores and
+other-scale (PHQ/GAD/BAARS) cores handled through one unified derivation;
+exploratory exhaustive searches switched to whichcfa='scalar'.
+
+### Code (commit a3ffc82)
+- LEVEL_NEW_PARAMS[scalar/strict] = None -> cfa_helper_func and
+  cfa_test_scalar_with_mi run those delta tests param-free (omnibus).
+- extract_item_mis_from_scalar rewritten on lavaan::modindices
+  (op "~1", group > 1 rows = score test for freeing each fixed group-2
+  intercept; unscaled `mi`, matching the X2 convention of the
+  threshold/loading extractors; unadjusted -- MIs only rank items for
+  removal).
+- extract_p now returns the exact float from the permuteMeasEq object's
+  AFI.pval["chisq"] slot (the value summary() prints, unrounded). The
+  old text parse matched the permutation line only via R grep's case
+  sensitivity and died when semTools' MI summary errored. NOTE: p-values
+  and fit indices are now exact rather than the printed roundings, so
+  borderline pass/fail can differ from what the old rounded strings
+  would have produced (all results regenerate from scratch, so there is
+  no mixed-provenance risk).
+- check_secondary_criteria reads cfi.robust/tli.robust/rmsea.robust via
+  fitMeasures (same quantities, exact).
+- exhaustive_cfa_ablations now gates success on the REQUESTED whichcfa
+  level's p on every pair (NaN fails). BEHAVIOR CHANGE FLAG: the
+  pre-measEq code gated on the metric flag even when whichcfa='scalar'
+  (the other-scales searches), so old "successes" included
+  metric-passing/scalar-failing combos; under the new gating they do
+  not.
+- All cfa_helper_func call sites audited: package (fit.run_specific_cfa,
+  exhaustive) and the two NB_2_cfa_exploratory cells; all use the
+  max_level signature and 6-value unpack.
+
+### Notebooks (commits 59c7e73, 1ac83da; edited only, not executed)
+- NB_2_cfa_as_reg: the scalar-continuation loop now derives each scale's
+  deliverable explicitly -- load_metric_run (FileNotFoundError -> full
+  item set, i.e. the baseline-verified metric core), scalar search, and
+  core_level in {'scalar','metric',None} with removals recorded relative
+  to the original scale. stepwise_scalar.pkl is the final-cores table.
+  New report-only section runs every final core up the ladder to STRICT
+  on all three pairs -> final_cores_strict_report.csv (+ log file).
+- NB_2_cfa_exploratory: HiTOP exhaustive loop -> whichcfa='scalar'.
+- NB_3_ICC: unified core assembly replaces the hardcoded orig_scales
+  rows and the stepwise/exhaustive patchwork. HiTOP cores come from
+  stepwise_scalar.pkl; HiTOP exhaustive alternates
+  (hitop_{scale}__ex_invcore, confirmatory=False) and PHQ/GAD/BAARS
+  exhaustive cores ({scale}__invcore, confirmatory=False, gp_en-only
+  evidence) flow through the same code path with the same columns
+  (core_level / confirmatory / inv / reduced). Downstream naming
+  conventions preserved: reduced HiTOP cores are
+  hitop_{scale}__invcore; full-scale cores keep bare names and their
+  ICCs come from section 1's precomputed columns. Sum-score construction
+  (and measures_for_icc_invcores) keys off the explicit `reduced` flag.
+- NB_invariance_plot: highest-level-passed computed explicitly from the
+  p-values over the 5-level ladder (the old null-count broke with
+  pthresholds and credited a tested-but-failed last level); heatmap adds
+  a Thresholds band (6 categories).
+- NB_4_convdiv: sum-score cell keys off `reduced`; prominent note that
+  the hypothesis functions' hardcoded __invcore/__ex_invcore/full-scale
+  column names are pre-measEq outcomes -- REBUILD from the new cores.pkl
+  after the overnight runs (mean-comparison-style claims restricted to
+  core_level == 'scalar' per the reporting rule).
+- NB_5_compare_to_archived: marked as the pre-measEq comparison harness;
+  its equality assertions are expected to fail against measEq-era
+  results by design.
+
+### Smoke test -- PASSED end-to-end (log: notebooks/log/smoke_measeq_stdout_v3.txt)
+- df ladders: +4/+3/+3/+4 exactly, all three pairs (k=4).
+- run_specific_cfa GP_EN (num_iter=50): config 0.38, thresholds 0.6,
+  metric 0.12, scalar 0.02 (genuine fail, matches parametric 0.018),
+  strict NA. All values numeric via the slot-based extract_p.
+- Metric stepwise: 3-way metric invariance with all 4 insomnia items.
+- Scalar continuation (resume + skip-lower): scalar failed at val_en
+  (0.00) and gp_en (0.02), passed val_gp (0.10); aggregated modindices
+  intercept MIs {hitop261: 22.26, hitop268: 6.94, hitop254: 5.89,
+  hitop160: 2.41} -> removed hitop261 (the same item the standalone
+  modindices diagnostic ranked first) -> 3-item core
+  [hitop160, hitop254, hitop268] passes the FULL ladder on all pairs
+  (gp_en: 0.66/0.38/0.48/0.08). MI dict keys verified as item names.
+- Warnings: the semTools "not yet optimized for testing thresholds"
+  warning still fires on every param="thresholds" test (behavior
+  verified sane); lavaan prints a note that modindices() ignores
+  equality constraints -- expected and benign here (we read MIs for
+  FIXED group-2 intercepts; the loading/threshold equality constraints
+  are not what is being tested).
+
+### For your review before the overnight runs
+- The exact-vs-rounded p change (extract_p / check_secondary_criteria)
+  and the exhaustive target-level gating are deliberate behavior
+  changes; both are flagged above for the corrections note.
+- NB_4's hypothesis-to-core-name mapping is the one remaining manual
+  step after results exist (flagged in the notebook itself).
+- gp_en scalar p for the 3-item insomnia core was 0.08 at 50
+  permutations -- close to threshold; expect finer resolution (and
+  possibly different outcomes) at num_iter=1000.
