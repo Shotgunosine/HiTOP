@@ -71,7 +71,10 @@ Edit the `SCALES` array (and `--array` range), `SIF`, and `DATA` in
 RNG streams are split by worker count, so the permutation p for a given
 test is only bit-identical to the local pipeline at 14 workers. More
 cores would still be valid tests, just not reproducible against the
-laptop runs.
+laptop runs. The template also sets `--threads-per-core=1`, which makes
+the 14 requested CPUs 14 physical cores -- one per worker, no
+hyperthread sharing -- without changing the worker count (or the
+results).
 
 Search behavior is identical to the exploratory notebook
 (`exhaustive_search_scale`): val_gp-first early abandon, the calibrated

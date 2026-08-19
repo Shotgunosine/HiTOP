@@ -10,6 +10,7 @@
 #
 #SBATCH --job-name=hitop-exh
 #SBATCH --cpus-per-task=14
+#SBATCH --threads-per-core=1
 #SBATCH --mem=16g
 #SBATCH --time=2-00:00:00
 #SBATCH --output=logs/exh_%A_%a.out
@@ -17,6 +18,9 @@
 
 # --cpus 14 is REQUIRED for bit-identical results with the local pipeline:
 # permuteMeasEq's L'Ecuyer RNG streams are split by worker count.
+# --threads-per-core=1 makes --cpus-per-task=14 mean 14 PHYSICAL cores
+# (no hyperthread sharing), so each of the 14 workers gets a full core;
+# worker count is unchanged, so results stay bit-identical.
 
 SCALES=(anhedonic_depression social_anxiety well_being)
 SIF=${SIF:-hitop-cfa.sif}
