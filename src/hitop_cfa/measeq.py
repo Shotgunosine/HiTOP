@@ -159,6 +159,20 @@ def fit_measeq_level(ordered, group_equal=None, parameterization="theta",
     return fit
 
 
+def fit_is_converged(r_fit_name):
+    """True if the lavaan fit stored in the R global ``r_fit_name`` converged.
+
+    Non-convergent fits make permuteMeasEq and fitMeasures error out
+    ("fit measures not available if model did not converge"), which would
+    kill an unattended run. Every caller checks this right after
+    fit_measeq_level and treats a non-convergent model as a FAILED level
+    (an invariance level that cannot be certified). Observed in practice:
+    a 3-item insomnia subset's configural model on the val_en pair does
+    not converge (caught by the overnight dress rehearsal).
+    """
+    return bool(ro.r(f'lavaan::lavInspect({r_fit_name}, "converged")')[0])
+
+
 def extract_item_mis_from_thresholds(item_list, r_out_name="out_thresholds"):
     """Per-item MIs for threshold equality constraints from a permuteMeasEq
     object (the ordinal analog of the old intercept-MI extractor).

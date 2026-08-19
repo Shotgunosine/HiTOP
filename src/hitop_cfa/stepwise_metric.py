@@ -23,13 +23,15 @@
 # =============================================================================
 from itertools import combinations
 
+import numpy as np
 import pandas as pd
 
 from .r_env import localconverter, pandas2ri, ro, set_seeds
 from .fit import (check_secondary_criteria, extract_p,
                   permute_measeq_with_retry, push_model_to_r)
 from .measeq import (WU_ESTABROOK_LEVELS, assert_level_adds_df,
-                     extract_item_mis_from_thresholds, fit_measeq_level)
+                     extract_item_mis_from_thresholds, fit_is_converged,
+                     fit_measeq_level)
 
 DEFAULT_CFI_TIE_TOLERANCE = 0.001
 DEFAULT_TLI_TIE_TOLERANCE = 0.001
@@ -55,12 +57,20 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
     fit_config = fit_measeq_level(list_of_items, group_equal=None,
                                   parameterization=parameterization,
                                   r_fit_name='fit_config')
-    out_config = permute_measeq_with_retry(num_iter, cpus_to_use,
-                                           con=fit_config)
-    config_p = extract_p(out_config)
-    config_passed_primary = (config_p >= 0.05)
-    config_passed_secondary, cfi, tli, rmsea = check_secondary_criteria(fit_config)
-    config_passed = config_passed_primary or config_passed_secondary
+    if not fit_is_converged('fit_config'):
+        # non-convergent fits crash permuteMeasEq/fitMeasures; treat as a
+        # configural failure so the search moves on instead of dying
+        print("  [WARN] configural model did not converge -- treated as "
+              "configural failure")
+        config_p, config_passed_primary, config_passed = np.nan, False, False
+        cfi = tli = rmsea = np.nan
+    else:
+        out_config = permute_measeq_with_retry(num_iter, cpus_to_use,
+                                               con=fit_config)
+        config_p = extract_p(out_config)
+        config_passed_primary = (config_p >= 0.05)
+        config_passed_secondary, cfi, tli, rmsea = check_secondary_criteria(fit_config)
+        config_passed = config_passed_primary or config_passed_secondary
 
     result = {
         'config_p':              config_p,
@@ -84,6 +94,12 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                       group_equal=_GROUP_EQUAL['thresholds'],
                                       parameterization=parameterization,
                                       r_fit_name='fit_thresholds')
+    if not fit_is_converged('fit_thresholds'):
+        print("  [WARN] thresholds model did not converge -- treated as "
+              "thresholds failure")
+        result['thresholds_p'] = np.nan
+        result['thresholds_passed'] = False
+        return result
     assert_level_adds_df('fit_config', 'fit_thresholds',
                          'configural', 'thresholds')
     out_thresholds = permute_measeq_with_retry(
@@ -104,6 +120,12 @@ def cfa_test_metric_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                   group_equal=_GROUP_EQUAL['metric'],
                                   parameterization=parameterization,
                                   r_fit_name='fit_metric')
+    if not fit_is_converged('fit_metric'):
+        print("  [WARN] metric model did not converge -- treated as "
+              "metric failure")
+        result['metric_p'] = np.nan
+        result['metric_passed'] = False
+        return result
     assert_level_adds_df('fit_thresholds', 'fit_metric',
                          'thresholds', 'metric')
     out_metric = permute_measeq_with_retry(

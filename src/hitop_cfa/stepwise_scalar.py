@@ -54,7 +54,8 @@ from .r_env import localconverter, pandas2ri, ro, set_seeds
 from .fit import (check_secondary_criteria, extract_p,
                   permute_measeq_with_retry, push_model_to_r)
 from .measeq import (WU_ESTABROOK_LEVELS, assert_level_adds_df,
-                     extract_item_mis_from_thresholds, fit_measeq_level)
+                     extract_item_mis_from_thresholds, fit_is_converged,
+                     fit_measeq_level)
 from .stepwise_metric import (DEFAULT_CFI_TIE_TOLERANCE,
                               DEFAULT_TLI_TIE_TOLERANCE,
                               _mi_removal_step, _pick_by_cascade,
@@ -176,6 +177,32 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                   parameterization=parameterization,
                                   r_fit_name='fit_config')
 
+    if not fit_is_converged('fit_config'):
+        # non-convergent fits crash permuteMeasEq/fitMeasures; treat as a
+        # configural failure so the search moves on instead of dying (even
+        # under skip_lower_tests: a model that no longer converges cannot
+        # be assumed invariant)
+        print("  [WARN] configural model did not converge -- treated as "
+              "configural failure")
+        return {
+            'config_p':              np.nan,
+            'config_passed':         False,
+            'config_passed_primary': False,
+            'config_cfi':            np.nan,
+            'config_tli':            np.nan,
+            'config_rmsea':          np.nan,
+            'thresholds_p':          None,
+            'thresholds_passed':     None,
+            'thresholds_item_mis':   None,
+            'metric_p':              None,
+            'metric_passed':         None,
+            'metric_item_mis':       None,
+            'scalar_p':              None,
+            'scalar_passed':         None,
+            'scalar_item_mis':       None,
+            'lower_levels_assumed':  False,
+        }
+
     if skip_lower_tests:
         config_p = np.nan
         config_passed_primary = True
@@ -217,6 +244,13 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                       group_equal=_GROUP_EQUAL['thresholds'],
                                       parameterization=parameterization,
                                       r_fit_name='fit_thresholds')
+    if not fit_is_converged('fit_thresholds'):
+        print("  [WARN] thresholds model did not converge -- treated as "
+              "thresholds failure")
+        result['thresholds_p'] = np.nan
+        result['thresholds_passed'] = False
+        result['lower_levels_assumed'] = False
+        return result
     assert_level_adds_df('fit_config', 'fit_thresholds',
                          'configural', 'thresholds')
 
@@ -244,6 +278,13 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                   group_equal=_GROUP_EQUAL['metric'],
                                   parameterization=parameterization,
                                   r_fit_name='fit_metric')
+    if not fit_is_converged('fit_metric'):
+        print("  [WARN] metric model did not converge -- treated as "
+              "metric failure")
+        result['metric_p'] = np.nan
+        result['metric_passed'] = False
+        result['lower_levels_assumed'] = False
+        return result
     assert_level_adds_df('fit_thresholds', 'fit_metric',
                          'thresholds', 'metric')
 
@@ -270,6 +311,12 @@ def cfa_test_scalar_with_mi(scalename, list_of_items, mydata_python, mydata_temp
                                   group_equal=_GROUP_EQUAL['scalar'],
                                   parameterization=parameterization,
                                   r_fit_name='fit_scalar')
+    if not fit_is_converged('fit_scalar'):
+        print("  [WARN] scalar model did not converge -- treated as "
+              "scalar failure")
+        result['scalar_p'] = np.nan
+        result['scalar_passed'] = False
+        return result
     assert_level_adds_df('fit_metric', 'fit_scalar', 'metric', 'scalar')
 
     # param-free omnibus: W&E fixes intercepts back rather than equating

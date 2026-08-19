@@ -14,7 +14,7 @@ import numpy as np
 
 from .r_env import RRuntimeError, ro, semtools, set_seeds
 from .measeq import (LEVEL_NEW_PARAMS, WU_ESTABROOK_LEVELS,
-                     assert_level_adds_df, fit_measeq_level)
+                     assert_level_adds_df, fit_is_converged, fit_measeq_level)
 
 LEVEL_NAMES = [name for name, _ in WU_ESTABROOK_LEVELS]
 LEVEL_GROUP_EQUAL = dict(WU_ESTABROOK_LEVELS)
@@ -221,6 +221,16 @@ def cfa_helper_func(scalename, list_of_items, mydata_python, mydata_temp_path,
     fit_config = fit_measeq_level(list_of_items, group_equal=None,
                                   parameterization=parameterization,
                                   r_fit_name='fit_configural')
+    if not fit_is_converged('fit_configural'):
+        # a non-convergent model would crash permuteMeasEq/fitMeasures;
+        # treat it as a configural failure and keep the run alive
+        print('CONFIG MODEL DID NOT CONVERGE -- treated as configural failure')
+        ps['configural'] = np.nan
+        for level in LEVEL_NAMES[1:]:
+            print(f'{_LEVEL_PRINT[level]} N/A')
+        return (flag_passed_metric, ps['configural'], ps['thresholds'],
+                ps['metric'], ps['scalar'], ps['strict'])
+
     # In the case of testing configural invariance when modelType = "mgcfa",
     # con is the configural model (implicitly, the unconstrained model is the
     # saturated model, so use the defaults uncon = NULL and param = NULL).
@@ -255,6 +265,11 @@ def cfa_helper_func(scalename, list_of_items, mydata_python, mydata_temp_path,
             fit_level = fit_measeq_level(
                 list_of_items, group_equal=LEVEL_GROUP_EQUAL[level],
                 parameterization=parameterization, r_fit_name=f'fit_{level}')
+            if not fit_is_converged(f'fit_{level}'):
+                print(f'{_LEVEL_PRINT[level]} MODEL DID NOT CONVERGE -- '
+                      f'treated as failed')
+                ps[level] = np.nan
+                break
             assert_level_adds_df(f'fit_{prev_level}', f'fit_{level}',
                                  prev_level, level)
             new_params = LEVEL_NEW_PARAMS[level]
