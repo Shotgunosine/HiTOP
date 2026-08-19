@@ -766,3 +766,19 @@ three got gp_en scalar cores, strict report intact, no errors.
 Downstream note: NB_3/NB_4 consume data/cfa (the 3-way results) only;
 the gp_en results are a separate analysis until the author decides how
 to consolidate them.
+
+### Round 8 addendum: gp_en baseline reused from the 3-way run
+
+Author question prompted two confirmations: (1) do_three_way_cfa_
+stepwise_mi (and the scalar/strict machinery) iterate whatever datasets
+dict they receive -- "three-way" is historical naming, so with
+{'gp_en': ...} they genuinely test only that pair; (2) the gp_en
+baseline ladder need not be recomputed: cfa_helper_func reseeds per
+scale x pair call, so the 3-way run's GP_EN rows are bit-identical to
+a fresh gp_en run. NB_2_as_reg_gp_en now reuses those rows from
+data/cfa/orig_cfa_res.csv and runs the ladder fresh only for scales
+missing from that record (self-sufficient if the 3-way baseline never
+ran). Stepwise stages always run fresh -- the 3-way removal paths were
+steered by the validation pairs and do not transfer. Sandbox execution
+confirmed: 3/3 baselines reused (1000-iter values), 0 fresh, stepwise
+and scalar stages fresh at 50 iters, no errors.
