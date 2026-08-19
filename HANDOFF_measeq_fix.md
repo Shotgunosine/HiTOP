@@ -659,3 +659,54 @@ scale, kill-switch when no triple passes); (d) sequential early-stopping
 permutation counts (Besag-Clifford style) for clear-cut configural
 cases -- the only direct attack on the dominant cost, and a methods
 change requiring the author's sign-off.
+
+## PROGRESS -- round 6 (2026-08-19): exhaustive search rebuilt (author decisions)
+
+Author decisions implemented in exhaustive.py (screened_ladder_test,
+exhaustive_search_scale, stepwise_configural_cap) and the exploratory
+notebook:
+- EARLY ABANDON: pairs tested in datasets-dict order with val_gp first
+  (the most-lethal pair: 63% candidate configural failure rate); a
+  combination is dropped at its first failing pair/level. Result-
+  identical (success requires all pairs); measured ~46% fewer candidate
+  configural permutes, ~69% fewer full-ladder permutes. Note: simulated
+  configural-first / level-first orderings were WORSE (+17% / +23% on
+  the 49 recorded ladders; the insured-against event -- late-pair
+  configural failure after an earlier full-ladder pass -- occurred
+  2/49) and were not adopted.
+- CALIBRATED DELTA PRE-SCREEN: alpha_screen = .005 on thresholds/
+  metric/scalar (Satorra-2000 lavTestLRT); configural NEVER screened
+  (round-5 calibration). Screened-out combos are recorded with their
+  parametric p for the audit trail.
+- SIZE CAPS: stepwise_configural_cap reads each scale's iteration-0
+  ablation certificate (anhedonic 8, social_anxiety 8, well_being 9;
+  None where the full set passed configural; 0 = ablation refuted
+  everything).
+- ORDER: scales searched smallest-first.
+- RESUMABILITY: per-combination progress persisted atomically to
+  cfa_dir/exhaustive_progress_{scale}.pkl; a killed run resumes where
+  it stopped; completed scales short-circuit and re-print their '!!!!!'
+  result lines so the parsed log stays complete after a resume rewrite.
+  Delete a scale's progress file to force a fresh search.
+
+Validation: functional test (insomnia, 25 iters) exercised fresh run /
+completed short-circuit / partial resume with identical results, and
+the printed successes dict round-trips ast.literal_eval (parse cells
+safe). Notably the search found exactly the stepwise scalar core
+(hitop160/254/268) and screened out the two emphatic failures at
+parametric p ~ .0002-.0004. Dress rehearsal v3 PASSED end-to-end with
+the new machinery (exploratory 1.4 min vs 2.1 pre-redesign).
+
+Overnight-run bookkeeping: the author stopped the old exploratory run
+at 07:25 after ~4 h on anhedonic (117 complete combos, no successes,
+sizes 9/8/partial 7). Those seed-identical results were parsed from the
+log and SEEDED into data/cfa/exhaustive_progress_anhedonic_depression
+.pkl as failed entries, so the relaunch skips them.
+
+RELAUNCH: NB_2_cfa_as_reg is complete and must NOT be rerun (it would
+recompute everything); launch only the exploratory notebook:
+    caffeinate -i ./notebooks/run_overnight.sh NB_2_cfa_exploratory.ipynb
+Rough expectation with caps+abandon+screen at 1000 iters: small scales
+in minutes-to-an-hour total; worst case remains the 10-item scales if
+no subset passes until deep sizes (order 10-20 h each), but the search
+is now resumable at combination granularity.
