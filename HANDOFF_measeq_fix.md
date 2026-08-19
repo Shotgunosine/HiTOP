@@ -198,3 +198,187 @@ Consequences:
   results-level checks (p=1.0 pattern; df ladders). The
   assert_level_adds_df guard makes vacuous comparisons structurally
   impossible going forward.
+
+## PROGRESS
+(agent session, 2026-08-18; tasks 2-6. Commits 38d4e74..c2fdb79 on `cfas`,
+plus the PROGRESS commit itself.)
+
+### Task 2 -- measeq.py integration (commit e4fc320, then 9b1d9e3)
+- measeq.py moved to src/hitop_cfa/measeq.py; exports added to __init__
+  (WU_ESTABROOK_LEVELS, LEVEL_NEW_PARAMS, build_measeq_model,
+  fit_measeq_level, extract_item_mis_from_thresholds, assert_level_adds_df,
+  plus load_metric_run / do_stepwise_scalar_from_metric_run /
+  permute_measeq_with_retry).
+- fit.py: cfa_helper_func climbs configural -> thresholds -> metric ->
+  scalar -> strict, every level via fit_measeq_level, with
+  assert_level_adds_df before EVERY permuteMeasEq delta test.
+  permuteMeasEq's `param` is what the level newly adds. Signature change:
+  do_metric/do_scalar/do_strict replaced by max_level; returns
+  (flag_passed_metric, config_p, thresholds_p, metric_p, scalar_p,
+  strict_p). cfa_levels(name) now returns the ordered level list.
+  New permute_measeq_with_retry centralizes the full->half->serial
+  multicore fallbacks for all callers. build_cfa_cmd kept for
+  configural-only use with an explicit vacuity warning.
+- run_specific_cfa rows gain a `pthresholds` column (see review flags).
+
+### Task 3 -- stepwise_metric.py (commit c04ddc4)
+- Per-pair test is configural -> thresholds -> metric on measEq models,
+  df-guard before each delta test.
+- New removal tier between configural ablation and loading-MI removal:
+  thresholds fail -> extract_item_mis_from_thresholds -> remove max-MI item
+  (action 'thresholds_mi_removal', removal_reason 'thresholds_mi_worst').
+- Marker bookkeeping removed (excluded_item=None; no "(marker = ...)"
+  prints). Preserved: combinatorial configural ablation with
+  all_config_passed filter, CFI(0.001)->TLI(0.001)->RMSEA cascade,
+  removed_items tuple + ablation_level history conventions, retry
+  fallbacks. History rows add per-pair thresholds_p/thresholds_passed and
+  all_thresholds_passed.
+
+### Task 4 -- stepwise_scalar.py (commit 730c6f9)
+- Package copy replaced with the repo-root v3 (they were byte-identical;
+  root staging copy deleted) and updated per the DECIDED block: measEq
+  models at every level; target SCALAR continuing from each metric core;
+  intercept-MI (op "~1") removal at scalar; threshold-MI and loading-MI
+  tiers as defensive lower-level handling; marker bookkeeping removed;
+  load_metric_run documented as measEq-era-pickles-only (all old pickles
+  deleted; kept that way). skip_lower iterations still fit all lower
+  models and still assert the df ladder; only the redundant permutation
+  tests are skipped. NOTE: the intercept-MI extractor turned out to be
+  structurally impossible under W&E -- see task 6 finding B; the scalar
+  stage is BLOCKED on your decision.
+
+### Task 5 -- notebooks (commit b6d2101; EDITED ONLY, nothing executed)
+- NB_2_cfa_as_reg: (a) baseline 5-level run_specific_cfa pass documented
+  under a new measEq header; (b) new cell DERIVES scales_failing_metric
+  from orig_cfa_res (pd.to_numeric(..., errors='coerce') handles
+  extract_p's 'NA' strings; a scale is failing unless every pair has
+  numeric pmetric >= .05); (c) stepwise metric loop now consumes the
+  derived list, same persistence pattern; (d) new scalar-continuation
+  section: try do_stepwise_scalar_from_metric_run, except
+  FileNotFoundError -> do_three_way_cfa_stepwise_scalar from the full
+  item list; saves {scale}_scalar_history.pkl,
+  stepwise_scalar_in_progress.pkl, stepwise_scalar.pkl.
+- NB_2_cfa_exploratory: cfa_helper_func calls updated to
+  (max_level='strict', 6-value unpack incl. pthresholds); inv_levels
+  gains 'thresholds'; manual inattention row records gp_en__thresholds;
+  markdown note that its hardcoded noninvariant_scales list is
+  pre-measEq and must be replaced with the derived list before running.
+- Stale pre-measEq outputs cleared from both notebooks (they were
+  records of the vacuous pipeline).
+
+### Task 1 cleanup
+- Stale "Expected if constraints are real" lines deleted from
+  check_invariance_dfs_v3.py (commit 38d4e74, which also commits this
+  handoff + the diagnostic scripts as the paper trail).
+
+### Task 6 -- smoke test (notebooks/smoke_test_measeq.py, commit c2fdb79)
+Insomnia (k=4), num_iter=50, all three pairs. Re-run with:
+`cd notebooks && pixi run python smoke_test_measeq.py`
+(outputs in notebooks/log/smoke_measeq*, transcript in
+notebooks/log/smoke_measeq_stdout_v2.txt).
+
+df ladders -- PASSED, all three pairs, exactly the validated formulas:
+```
+configural=4  thresholds=8  metric=11  scalar=14  strict=18
+config->thresholds +4 (+k)   thresholds->metric +3 (+(k-1))
+metric->scalar     +3 (+(k-1))   scalar->strict  +4 (+k)
+```
+
+FINDING A (bug, FIXED, commit 9b1d9e3): the first smoke run returned
+permutation p = 0 at thresholds on EVERY pair (and metric, on direct
+test) while the parametric Satorra-2000 tests inside the same
+permuteMeasEq objects were unremarkable (gp_en thresholds: perm p=0 vs
+parametric p=0.49). The permuted null was degenerate -- all 50 permuted
+delta-chisq values exactly 0. Root cause was ours: permuteMeasEq refits
+con/uncon per permutation via lavaan::update(), which re-evaluates the
+original call; our call was cfa(measeq_mod_str, ...) with ONE shared R
+global for the model string, so both refits resolved to the last-built
+model (identical models -> delta == 0). Fixed by storing each level's
+syntax under a fit-specific global (<r_fit_name>_mod_str). This is the
+mirror image of the p=1.0 bug and is why the smoke-test gate existed;
+task-1 validation could not have caught it (no permutations there).
+Post-fix (gp_en, 50 iters): thresholds perm p=0.60 (parametric 0.49),
+metric perm p=0.10-0.12 (parametric 0.15), nulls non-degenerate.
+
+Post-fix smoke results:
+- STEP 2 run_specific_cfa GP_EN: CONFIG p=0.38, THRESHOLDS p=0.6,
+  METRIC p=0.12, then CRASH at scalar (finding B).
+- STEP 3 stepwise metric: 3-way metric invariance at iteration 0 with
+  all 4 items (per-pair thresholds/metric permutation tests all passed).
+  MI extractors were exercised in the pre-fix run and returned proper
+  item keys (threshold MIs, e.g. {hitop160: 0.09, hitop254: 1.64,
+  hitop261: 0.36, hitop268: 1.32}); no plabels/NAs seen anywhere.
+- STEP 4 scalar continuation: load_metric_run resume + skip-lower path
+  worked, then CRASH at the scalar permutation test (finding B).
+
+FINDING B (STOP-AND-REPORT -- scalar/strict machinery blocked on your
+decision): under Wu-Estabrook, the scalar model imposes intercept
+invariance by FIXING both groups' intercepts to 0 (shared nu.* labels,
+free=0) and freeing the group-2 latent mean; strict likewise fixes
+group-2 residual variances back to 1. There are NO "==" equality
+constraints for intercepts/residuals (only loadings and thresholds are
+label-equated). Consequences, verified on insomnia/gp_en:
+1. permuteMeasEq(param="intercepts") -> MI.obs is EMPTY -> semTools'
+   summary() errors ("replacement has 1 row, data has 0") -> extract_p
+   raises. Same applies to param="residuals" at strict. This is a
+   listed stop trigger, so I did not work around it in the pipeline.
+2. The op "~1" intercept-MI extractor in stepwise_scalar can never
+   return anything: the handoff's DECIDED assumption ("the original
+   extractor is valid again under measEq") does not hold. (The handoff's
+   own npar note -- "parameters fixed back" -- already implied this.)
+3. Validated alternatives (diagnostics only, not wired in):
+   - Omnibus permutation with param=NULL works at scalar AND strict:
+     gp_en scalar perm p=0.02 (parametric 0.018 -- insomnia genuinely
+     fails scalar, consistent with the task-1 preview), strict perm
+     p=0.92 (parametric 0.725); healthy non-degenerate nulls.
+   - lavaan::modindices() on the scalar fit returns per-item MIs for
+     the fixed group-2 "~1" rows (insomnia/gp_en: hitop261 4.77,
+     hitop268 3.58, hitop160 2.35, hitop254 2.23) -- a direct "which
+     item's intercept most differs" score test usable as the removal
+     signal (unadjusted, i.e. no permutation Tukey correction, but MIs
+     only rank items for removal).
+   RECOMMENDATION (your call): scalar/strict delta tests via
+   param=NULL omnibus permutation; scalar removal driven by
+   modindices() group-2 intercept MIs; equivalent modindices-based
+   signal at strict is unnecessary (report-only). Alternative: patch
+   the Shotgunosine/semTools fork's summary() to tolerate empty MI
+   tables -- fixes the crash but still yields no intercept MIs.
+
+Warnings observed:
+- semTools warns on every param="thresholds" permutation test: "This
+  function is not yet optimized for testing thresholds. Necessary
+  identification contraints might not be specified." Post-fix behavior
+  looks sane (permutation p tracks parametric; threshold MIs keyed by
+  item and matched to hitopNNN|tN parameters), but flagging since the
+  thresholds tests will now gate every scale.
+- The usual "No AFIs were selected, so only chi-squared will be
+  permuted" notes; benign.
+
+### Other flags for your review
+- NB_invariance_plot.ipynb infers the level reached by COUNTING NULLS
+  per row of orig_cfa_res.csv; the new pthresholds column shifts that
+  count. Needs a small update before reuse (not in the task list, left
+  untouched).
+- extract_p on permuteMeasEq output parses the lowercase "chisq" summary
+  line (the permutation p). R's grep is case-sensitive, so the
+  parametric "Chisq diff" line is not matched -- still true post-measEq,
+  verified.
+- cfa_helper_func's signature changed (max_level replaces the three
+  do_* flags; `ordered` dropped -- measEq.syntax requires explicit item
+  names, and the item list is always used). Both notebooks updated;
+  anything else calling it directly will need the same change.
+- Smoke-test p-values are 50-permutation coarse; the df assertions are
+  the ground truth. The metric perm p of 0.10-0.12 at gp_en will
+  resolve more finely at num_iter=1000.
+- semTools in the pixi env reports 0.5.8.903 (the defend_parallel fork
+  build); BLAS pinning, set_seeds(12345)-before-every-fit, and the
+  retry-with-fewer-cores fallbacks are preserved throughout.
+
+### State / what's next (author)
+- Tasks 2, 3, 5 complete and smoke-validated through metric. Task 4's
+  code is complete but its scalar stage cannot run until you decide on
+  the finding-B mechanism; the scalar-continuation notebook cells will
+  crash at the first scalar permutation test as things stand. Do NOT
+  launch the overnight runs before that decision; the baseline
+  (NB_2_cfa_as_reg cell 'strict' ladder) would also crash at scalar for
+  any scale that reaches it.
