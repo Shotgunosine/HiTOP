@@ -63,13 +63,24 @@ LEVEL_NEW_PARAMS = {
 
 
 def build_measeq_model(ordered, group_equal=None, parameterization="theta",
-                       id_fac="std.lv"):
+                       id_fac="std.lv", r_syntax_name="measeq_mod_str"):
     """Generate lavaan model syntax for one invariance level via
     semTools::measEq.syntax with Wu & Estabrook (2016) identification.
 
     Expects the same R globals that ``fit.push_model_to_r`` sets:
     ``testformula_r`` (configural model string), ``rdata`` (data.frame),
     ``group`` (grouping column name).
+
+    ``r_syntax_name`` is the R global the generated syntax is stored in.
+    IT MUST BE UNIQUE PER LEVEL when the fitted models go to permuteMeasEq:
+    permuteMeasEq refits con/uncon on each permuted dataset via
+    lavaan::update(), which re-evaluates the fit's original call, so the
+    model-string SYMBOL in that call is resolved again at update time. If
+    two levels share one symbol, both refits resolve to whichever model was
+    built last -> identical models -> every permuted delta-chisq is exactly
+    0 -> permutation p = 0 for any positive observed delta (verified on
+    this project's data during the task-6 smoke test; the parametric
+    delta tests on the same fits were sane).
 
     Parameters
     ----------
@@ -113,9 +124,9 @@ def build_measeq_model(ordered, group_equal=None, parameterization="theta",
             ID.fac = "{id_fac}",
             ID.cat = "Wu.Estabrook.2016",
             {ge_str}return.fit = FALSE)
-        measeq_mod_str <- as.character(measeq_mod)
+        {r_syntax_name} <- as.character(measeq_mod)
     ''')
-    return ro.r('measeq_mod_str')[0]
+    return ro.r(r_syntax_name)[0]
 
 
 def fit_measeq_level(ordered, group_equal=None, parameterization="theta",
@@ -123,12 +134,19 @@ def fit_measeq_level(ordered, group_equal=None, parameterization="theta",
     """Build the measEq.syntax model for one level and fit it with lavaan.
 
     The fitted object is stored in the R global ``r_fit_name`` (so callers
-    can hand it to permuteMeasEq) and also returned.
+    can hand it to permuteMeasEq) and also returned. The model syntax is
+    stored under the fit-specific global ``{r_fit_name}_mod_str`` -- this
+    per-fit name is LOAD-BEARING for permuteMeasEq (see build_measeq_model:
+    a shared syntax symbol makes update()-based permutation refits of
+    con and uncon identical, degenerating the permutation null to all
+    zeros). Callers must therefore give each level its own r_fit_name.
     """
-    build_measeq_model(ordered, group_equal, parameterization, id_fac)
+    r_syntax_name = f'{r_fit_name}_mod_str'
+    build_measeq_model(ordered, group_equal, parameterization, id_fac,
+                       r_syntax_name=r_syntax_name)
     ordered_str = 'c(' + ', '.join(f'"{i}"' for i in ordered) + ')'
     fit = ro.r(
-        f'{r_fit_name} <- lavaan::cfa(measeq_mod_str, data = rdata, '
+        f'{r_fit_name} <- lavaan::cfa({r_syntax_name}, data = rdata, '
         f'group = group, ordered = {ordered_str}, '
         f'parameterization = "{parameterization}", estimator = "WLSMV")')
     return fit
