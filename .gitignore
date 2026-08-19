@@ -39,3 +39,6 @@ archive/
 # python bytecode
 __pycache__/
 *.pyc
+
+# rehearsal artifacts (patched notebook copies with outputs)
+notebooks/zz_rehearsal_*.ipynb
