@@ -832,3 +832,38 @@ rather than a standard two-sample contrast (test-retest reliability
 proper lives in NB_3's ICCs). Sandbox executions (2 BAARS subscales,
 50 iters) of gp1_gp2 and gp2_en1: PASSED end-to-end with the expected
 group sizes (398/398, 398/255), full-set scalar cores, no errors.
+
+## PROGRESS -- round 11 (2026-08-19): PHQ-8 gp_en follow-up notebook
+
+notebooks/NB_phq8_gp_en_followup.ipynb (outputs: data/cfa_phq8_followup/):
+A) conventional-criteria screen (scaled CFI/RMSEA deltas; robust variants
+are undefined on constrained measEq fits), B) per-group PHQ-8 EFAs,
+C) DIF effect sizes correctly decomposed (metric-model group-2
+intercepts vs the scalar-model latent mean: d_i = nu_i - lambda_i*alpha;
+the naive configural-curve version conflated the real severity gap with
+bias and was discarded), D) exhaustive scalar search for a PHQ-8 subset
+on gp_en (capped at size 6 by the stepwise certificate; resumable).
+
+Sections A-C are fit-based -- their sandbox outputs ARE the production
+numbers:
+- A: under conventional delta-CFI (<=.01) / delta-RMSEA (<=.015)
+  criteria the full PHQ-8 PASSES every level (max |dCFI| = .0012);
+  configural absolute fit mixed (CFI .980, RMSEA .104). The
+  non-invariance is invisible to the field's usual yardstick and
+  detected only by the exact permutation test.
+- B: genpop is near-unidimensional (eigenvalues 5.62, 0.62, ...);
+  enriched less so (4.51, 0.98, ...) with a 2-factor geomin split of
+  somatic (sleep/fatigue/appetite) vs affective/cognitive items
+  (2-factor CFI .975 in enriched) -- the structural difference behind
+  the configural failure.
+- C: real severity gap alpha = +1.14 latent SD (= +7.03 expected sum
+  points); per-item non-uniform DIF is small (|d| .04-.31, dMACS
+  .03-.20, "small" by Nye-Drasgow benchmarks) and largely CANCELS at
+  the sum level: net measurement bias -0.05 of 24 points. The earlier
+  naive +7.37 figure decomposes into the real gap plus ~0 net DIF.
+INTERPRETATION SHIFT: statistically real but small, mutually-cancelling
+item-level DIF atop a structural (dimensionality) difference; pooled
+sum-score analyses are far less threatened than the raw configural
+failure suggested, though the cancellation is item-profile-dependent
+and the structure difference stands. Section D (exhaustive) runs at
+1000 iters via the runner.
