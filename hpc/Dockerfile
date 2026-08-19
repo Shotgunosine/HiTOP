@@ -27,7 +27,8 @@ RUN pixi shell-hook --manifest-path /opt/hitop/pixi.toml > /opt/hitop/activate.s
        > /opt/hitop/entrypoint.sh && chmod +x /opt/hitop/entrypoint.sh
 
 # BLAS must stay single-threaded (permuteMeasEq does the parallelism)
-ENV OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+ENV OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+    LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 WORKDIR /opt/hitop/notebooks
 ENTRYPOINT ["/opt/hitop/entrypoint.sh"]

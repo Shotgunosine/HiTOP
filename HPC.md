@@ -16,7 +16,8 @@ versions are asserted at build time).
 
 Option A — directly on the cluster (no Docker needed), from the repo root:
 
-    apptainer build hitop-cfa.sif hpc/hitop_cfa.def
+    module load singularity
+    singularity build hitop-cfa.sif hpc/hitop_cfa.def
 
 Option B — anywhere with Docker (note `--platform linux/amd64` when
 building on an ARM Mac), then convert:
@@ -36,7 +37,7 @@ count -> same permutation draws). Use your real data path (on Biowulf,
 
     apptainer run hitop-cfa.sif run_exhaustive_scale.py insomnia \
         --num-iter 25 --cpus 14 \
-        --data-dir /data/$USER/hitop/finaldata --cfa-dir /tmp/check
+        --data-dir /data/MLDSST/$USER/hitop/scalar/data/finaldata --cfa-dir /tmp/check
     # run the identical command locally (pixi run python ...) and compare
     # the printed results dict; they should match. Small borderline
     # discrepancies would indicate BLAS-level numeric differences --
@@ -81,8 +82,10 @@ resubmitted.
 
 ## 4. Monitor
 
-    apptainer exec hitop-cfa.sif bash -c "source /opt/hitop/activate.sh && \
-        python /opt/hitop/notebooks/exploratory_status.py /data/$USER/hitop/cfa"
+    apptainer exec -B /data/MLDSST hitop-cfa.sif bash -c \
+        "source /opt/hitop/activate.sh && \
+         python /opt/hitop/notebooks/exploratory_status.py \
+         /data/MLDSST/$USER/hitop/scalar/data/cfa"
 
 plus the per-task SLURM logs in `logs/` (per-combination lines with
 abandon/screen reasons).
@@ -125,3 +128,16 @@ locally.
   (`rm -rf ~/.cache/rattler/cache/uv-cache`) and set
   `PIXI_CACHE_DIR=/tmp/pixi-cache-$USER` -- but the compute nodes'
   lack of network makes this fragile; prefer the rebuild.
+
+- Container sees an EMPTY directory where your data should be
+  (`FileNotFoundError`, or `apptainer shell` + `ls` shows nothing at your
+  cwd): the path was not bound. Pass it explicitly (`-B /data/MLDSST`) or
+  `export APPTAINER_BINDPATH=/data/MLDSST`; the sbatch template already
+  binds `$DATA` explicitly.
+- `[[: Permission denied` from the runscript: an image built before the
+  bash-wrapper fix runs `%runscript` under /bin/sh while the conda
+  activation scripts are bash. Harmless for python itself, but rebuild --
+  or invoke via `apptainer exec ... bash -c 'source /opt/hitop/activate.sh
+  && python ...'` which sidesteps it.
+- `Setting LC_* failed` warnings: cosmetic (no locales in the minimal
+  image); current images set LC_ALL=C.UTF-8 to silence them.

@@ -25,14 +25,19 @@ From: ghcr.io/prefix-dev/pixi:0.69.0
     # which fails on NFS homes and needs network -- neither exists on
     # HPC compute nodes)
     pixi shell-hook --manifest-path /opt/hitop/pixi.toml > /opt/hitop/activate.sh
+    # bash wrapper: %runscript executes under /bin/sh (dash), but the
+    # activation scripts (conda activate.d) are bash -- '[[: Permission
+    # denied' otherwise
+    printf '#!/bin/bash\nset -e\nsource /opt/hitop/activate.sh\ncd /opt/hitop/notebooks\nexec python "$@"\n' > /opt/hitop/run.sh
+    chmod +x /opt/hitop/run.sh
     pixi clean cache --yes || true
 
 %environment
     export OMP_NUM_THREADS=1
     export OPENBLAS_NUM_THREADS=1
     export MKL_NUM_THREADS=1
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
 
 %runscript
-    . /opt/hitop/activate.sh
-    cd /opt/hitop/notebooks
-    exec python "$@"
+    exec /opt/hitop/run.sh "$@"

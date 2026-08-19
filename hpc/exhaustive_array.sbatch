@@ -20,7 +20,7 @@
 
 SCALES=(anhedonic_depression social_anxiety well_being)
 SIF=${SIF:-hitop-cfa.sif}
-DATA=${DATA:-/data/$USER/hitop}
+DATA=${DATA:-/data/MLDSST/$USER/hitop/scalar/data}
 
 scale=${SCALES[$SLURM_ARRAY_TASK_ID]}
 mkdir -p logs
