@@ -483,3 +483,45 @@ exploratory exhaustive searches switched to whichcfa='scalar'.
 - gp_en scalar p for the 3-item insomnia core was 0.08 at 50
   permutations -- close to threshold; expect finer resolution (and
   possibly different outcomes) at num_iter=1000.
+
+## PROGRESS -- round 3 (2026-08-18): outcome-coupled subscale lists derived
+
+Author request: replace hardcoded subscale lists with generated ones
+(commit 978efe7). Every list encoding an analysis OUTCOME is now derived
+from pipeline outputs; only substantive definitions stay literal
+(orig_items / other_scales formulas, the depression-vs-anxiety domain
+grouping in NB_4, instrument-total names, display-name exceptions).
+
+- NB_2_cfa_exploratory: noninvariant_scales derived from orig_cfa_res.csv
+  (full set fails 3-way scalar); other-scales baseline collects
+  other_orig_cfa_res.csv and the failing list is derived from it; item
+  luts keyed by scale name (other_luts dict); excluded-subsets formulas
+  derived from stepwise_scalar.pkl removed_nos (>= 3 items); the
+  interpretation item-id dict generated from orig_items (the old copy had
+  drifted: indecisiveness missing, items 240/159 dropped).
+- NB_3_ICC: per-subscale measures_for_icc entries generated from the
+  final-cores table.
+- NB_4_convdiv: programmatic core resolution from cores.pkl per scale
+  (confirmatory __invcore > full-scale > __ex_invcore > full scale with a
+  no-invariant-core warning per the prereg's enriched-only rule), exposed
+  as canonical hitop_{scale}__core alias columns used by ALL hypothesis
+  code (dep/anx lists, HiTOP sums, cols_for_d, calc_dhs); a resolution
+  table (column, path, core_level) is printed for review. The divergent
+  computed columns are renamed hitop_all_depression__core /
+  hitop_all_anxiety__core. The dead commented-out pre-refactor hypothesis
+  function was removed (git history keeps it). This supersedes round 2's
+  "re-map NB_4 by hand after results" flag -- the mapping is now
+  automatic; what remains manual is only reviewing the printed resolution
+  table and applying the enriched-only rule if any scale ends up with no
+  core.
+- NB_icc_plots: measure_dict/order_dict generated (order = ascending
+  full-scale ICC within HiTOP/BAARS/totals blocks, matching how the old
+  hand orderings were built); block-header bolding by label text, not
+  positional index; suffix-splitting made robust to the new PHQ/GAD/BAARS
+  core rows. Outcome-specific presentation tweaks that CANNOT be derived
+  are flagged in place: footnote asterisks (re-add via DISPLAY_OVERRIDES
+  after review) and the panic exhaustive-core suppression.
+
+Run-order dependency made explicit: the exploratory notebook's derived
+lists read orig_cfa_res.csv / stepwise_scalar.pkl, so NB_2_cfa_as_reg's
+baseline and scalar-continuation sections must run first.
