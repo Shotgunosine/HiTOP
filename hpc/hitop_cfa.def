@@ -20,6 +20,11 @@ From: ghcr.io/prefix-dev/pixi:0.69.0
     cd /opt/hitop
     pixi install --locked
     pixi run Rscript hpc/install_r_libraries.R
+    # bake the activation script so NOTHING invokes pixi at runtime
+    # (runtime pixi re-verifies the env and writes caches under $HOME,
+    # which fails on NFS homes and needs network -- neither exists on
+    # HPC compute nodes)
+    pixi shell-hook --manifest-path /opt/hitop/pixi.toml > /opt/hitop/activate.sh
     pixi clean cache --yes || true
 
 %environment
@@ -28,5 +33,6 @@ From: ghcr.io/prefix-dev/pixi:0.69.0
     export MKL_NUM_THREADS=1
 
 %runscript
+    . /opt/hitop/activate.sh
     cd /opt/hitop/notebooks
-    exec pixi run --manifest-path /opt/hitop/pixi.toml python "$@"
+    exec python "$@"

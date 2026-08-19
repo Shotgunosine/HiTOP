@@ -24,8 +24,11 @@ DATA=${DATA:-/data/$USER/hitop}
 
 scale=${SCALES[$SLURM_ARRAY_TASK_ID]}
 mkdir -p logs
-apptainer exec --bind "$DATA":/data "$SIF" \
-  pixi run --manifest-path /opt/hitop/pixi.toml \
-  python /opt/hitop/notebooks/run_exhaustive_scale.py "$scale" \
+# no pixi at runtime: source the baked activation and call python directly
+# (on Biowulf, /data is auto-bound; the explicit --bind keeps this template
+# portable to clusters that do not auto-bind)
+apptainer exec --bind "$DATA":"$DATA" "$SIF" bash -c "
+  source /opt/hitop/activate.sh
+  python /opt/hitop/notebooks/run_exhaustive_scale.py '$scale' \
     --num-iter 1000 --cpus 14 \
-    --data-dir /data/finaldata --cfa-dir /data/cfa
+    --data-dir '$DATA/finaldata' --cfa-dir '$DATA/cfa'"

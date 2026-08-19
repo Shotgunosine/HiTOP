@@ -31,14 +31,23 @@ remote builder, or push the Docker image to a registry and
 ### Verify the build
 
 Deterministic cross-check against the laptop (same seeds, same worker
-count -> same permutation draws):
+count -> same permutation draws). Use your real data path (on Biowulf,
+/data/$USER/... is auto-bound into the container):
 
     apptainer run hitop-cfa.sif run_exhaustive_scale.py insomnia \
-        --num-iter 25 --cpus 14 --data-dir /data/finaldata --cfa-dir /tmp/check
+        --num-iter 25 --cpus 14 \
+        --data-dir /data/$USER/hitop/finaldata --cfa-dir /tmp/check
     # run the identical command locally (pixi run python ...) and compare
     # the printed results dict; they should match. Small borderline
     # discrepancies would indicate BLAS-level numeric differences --
     # re-check with --num-iter 100 before trusting the image.
+
+Nothing invokes pixi at runtime: the image bakes an activation script
+(/opt/hitop/activate.sh) at build time and the runscript/entrypoint
+sources it and calls the environment's python directly. (Runtime pixi
+would try to re-verify the environment, writing caches under $HOME --
+which fails on NFS homes -- and would need network, which compute nodes
+don't have.)
 
 ## 2. Ship the data
 
@@ -72,9 +81,8 @@ resubmitted.
 
 ## 4. Monitor
 
-    apptainer exec --bind /data/$USER/hitop:/data hitop-cfa.sif \
-        pixi run --manifest-path /opt/hitop/pixi.toml \
-        python /opt/hitop/notebooks/exploratory_status.py /data/cfa
+    apptainer exec hitop-cfa.sif bash -c "source /opt/hitop/activate.sh && \
+        python /opt/hitop/notebooks/exploratory_status.py /data/$USER/hitop/cfa"
 
 plus the per-task SLURM logs in `logs/` (per-combination lines with
 abandon/screen reasons).
@@ -101,3 +109,19 @@ locally.
 - `--mem=16g` is generous; the fits are small. `--time`: the capped
   10-item scales are worst-case ~1-2 days at 1000 iters if nothing
   passes until small sizes; resumability makes shorter limits safe too.
+
+## Troubleshooting
+
+- `failed to create uv cache directory ... /home/.../.cache/rattler/...`
+  (or any rattler/uv cache error at runtime): you are running an image
+  built before 2026-08-19 whose runscript invoked `pixi run` at runtime.
+  Rebuild from the current hpc/ files, or work around without a rebuild:
+
+      apptainer exec hitop-cfa.sif bash -c '
+        export PATH=/opt/hitop/.pixi/envs/default/bin:$PATH
+        python /opt/hitop/notebooks/run_exhaustive_scale.py ...'
+
+  If you want runtime pixi anyway, clear the stale cache path
+  (`rm -rf ~/.cache/rattler/cache/uv-cache`) and set
+  `PIXI_CACHE_DIR=/tmp/pixi-cache-$USER` -- but the compute nodes'
+  lack of network makes this fragile; prefer the rebuild.

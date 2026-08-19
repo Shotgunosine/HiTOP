@@ -19,9 +19,16 @@ RUN pixi run Rscript hpc/install_r_libraries.R
 
 COPY notebooks/run_exhaustive_scale.py notebooks/exploratory_status.py notebooks/
 
+# bake the activation script so nothing invokes pixi at runtime (runtime
+# pixi re-verifies the env and writes caches under $HOME -- fails on NFS
+# homes and needs network, neither available on HPC compute nodes)
+RUN pixi shell-hook --manifest-path /opt/hitop/pixi.toml > /opt/hitop/activate.sh \
+    && printf '#!/bin/bash\nset -e\nsource /opt/hitop/activate.sh\ncd /opt/hitop/notebooks\nexec "$@"\n' \
+       > /opt/hitop/entrypoint.sh && chmod +x /opt/hitop/entrypoint.sh
+
 # BLAS must stay single-threaded (permuteMeasEq does the parallelism)
 ENV OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 
 WORKDIR /opt/hitop/notebooks
-ENTRYPOINT ["pixi", "run", "--manifest-path", "/opt/hitop/pixi.toml"]
+ENTRYPOINT ["/opt/hitop/entrypoint.sh"]
 CMD ["python", "run_exhaustive_scale.py", "--help"]
