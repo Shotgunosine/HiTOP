@@ -615,3 +615,47 @@ behavior, now at least survivable).
 - The rehearsal overwrote two stale pre-measEq scratch logs in
   notebooks/log/ (mylog_3wayCFA_origscales..., mylog_3wayCFA_lookingforinv...);
   both were gitignored scratch from the deleted-results era.
+
+## PROGRESS -- round 5 (2026-08-19): parametric pre-screen calibration
+
+Author asked whether a permissive-alpha parametric pre-screen could
+accelerate the exhaustive ablation while guaranteeing no permutation-
+passing core is missed. Calibration: all 954 permutation tests recorded
+by the overnight run (594 item-set x pair ladders; baseline + stepwise
+histories + strict report) were refit and paired with their parametric
+analogs (configural: pvalue.scaled; deltas: Satorra-2000 lavTestLRT).
+Scripts: notebooks/calibrate_screen.py, notebooks/analyze_calibration.py;
+data: notebooks/log/calibration_pairs.csv. Zero refit failures.
+
+VERDICT (two parts):
+1. CONFIGURAL CANNOT BE SCREENED PARAMETRICALLY. Spearman rho = 0.38;
+   at alpha=.005 the screen would discard 257 true permutation passers,
+   including ladders with permutation p = 1.0 (e.g. anhedonic full set
+   gp_en: parametric p ~ 0 vs permutation p = .144). Root cause is
+   conceptual: permuteMeasEq's configural test asks whether the groups
+   fit EQUALLY well (observed chisq vs group-permuted chisq null),
+   while the parametric p tests ABSOLUTE fit -- different hypotheses.
+   (Also: 3-item configural models are saturated; no parametric p at
+   all.) The configural permutation test is unavoidable per candidate.
+2. DELTA LEVELS SCREEN CLEANLY BUT SAVE LITTLE. thresholds/metric/
+   scalar: rho = .98-.99; ZERO permutation passers lost at any alpha up
+   to .02 across all 342 recorded delta tests (min passer parametric
+   p = .0444). Proposed alpha_screen = .005 (9x margin). But because
+   the ladder is already failure-gated and the unscreenable configural
+   permute dominates (546/906 usable tests), the screen avoids only
+   ~13-16% of delta permutes = ~5-6% of total permutation work.
+   (Strict: one passer at parametric p = .0101 -- strict is report-only
+   and outside the search, but do NOT screen strict at .05-ish alphas.)
+
+CONCLUSION: the pre-screen is safe at the delta levels but is NOT the
+order-of-magnitude lever hoped for; the top-down exhaustive's cost
+lives in the per-candidate configural permutation, which tests a
+hypothesis with no cheap parametric analog. The remaining levers, in
+increasing order of methods-change weight: (a) delta screen at .005
+(free, zero observed cost); (b) stepwise-certificate size caps and
+reuse of recorded configural passers at certified sizes; (c) the
+bottom-up triple-first search (bounded 120-combo screen per 10-item
+scale, kill-switch when no triple passes); (d) sequential early-stopping
+permutation counts (Besag-Clifford style) for clear-cut configural
+cases -- the only direct attack on the dominant cost, and a methods
+change requiring the author's sign-off.
