@@ -782,3 +782,30 @@ ran). Stepwise stages always run fresh -- the 3-way removal paths were
 steered by the validation pairs and do not transfer. Sandbox execution
 confirmed: 3/3 baselines reused (1000-iter values), 0 fresh, stepwise
 and scalar stages fresh at 50 iters, no errors.
+
+## PROGRESS -- round 9 (2026-08-19): remaining two-way notebooks + other-scales pipeline
+
+- The author created NB_2_cfa_as_reg_gp_val / _en_val as copies of the
+  gp_en variant (and renamed that to NB_2_cfa_as_reg_gp_en); the copies
+  were retargeted: pair V_GP/val_gp (resp. V_EN/val_en) with the 3-way
+  labels kept so reused baseline rows and history columns line up;
+  outputs isolated in data/cfa_gp_val/ and data/cfa_en_val/; distinct
+  logs; baseline rows reused from the 3-way orig_cfa_res.csv. The data
+  concat keeps the 3-way order (val first) -- permutation draws depend
+  on row order, so this preserves seed-identity of reused and fresh
+  tests alike. Sandbox executions (3 small scales, 50 iters): both
+  PASSED with pair-specific cores and no errors.
+- NB_2_cfa_as_reg_other_gp_en: full stepwise pipeline for the six
+  PHQ/GAD/BAARS scales. AUTHOR DECISION: gp_en only -- the validation
+  sample contains none of these measures (confirmed against
+  dat_val.csv), so the requested triple/pairwise design is impossible;
+  a recontact-wave longitudinal design was offered and declined.
+  Formulas come from hitop_cfa.scales.OTHER_SCALES; item texts from the
+  combined instrument luts; baseline rows reused from the exploratory's
+  other_orig_cfa_res.csv when present (seed-identical), fresh
+  otherwise; outputs in data/cfa_other_gp_en/. Sandbox execution
+  (2 BAARS subscales, 50 iters): PASSED, both full-set scalar at gp_en,
+  no errors.
+- Six pipeline variants now exist (3-way, gp_en, gp_val, en_val,
+  other_gp_en, plus the exploratory exhaustive); each owns its output
+  dir; pipeline_status.py works on any of them.
