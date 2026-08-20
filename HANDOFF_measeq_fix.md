@@ -1040,3 +1040,17 @@ stepwise-only core assembly).**
   drops well_being/panic -.07/-.06). RESULTS.md ICC section + finding 7
   updated to label gp_en as the preregistered set and 3way as
   exploratory-for-ICC.
+
+### Round 15 addendum 2: full-scale reference scoring in the validity comparison
+
+- Author request: add the original full scales to the validity-hypothesis
+  figure. NB_core_effects gained a third run_validity('full_scale', ...)
+  pass (bare-name full-scale cores frame; criteria untouched) and the
+  comparison cell/figure now shows three series (full / triple / gp_en).
+  Executed clean; convdiv_full_scale.csv added.
+- Result: identical support pattern under all three scorings (C1-C7, D1,
+  D2 supported; D3 reversed-sign ns; D4 D5 ns); 15/16 agree incl.
+  exploratory rows (exd4 supported under full p=.013 and triple p=.040
+  but not gp_en p=.15). Core scoring changes no preregistered validity
+  conclusion relative to full-scale scoring. RESULTS.md finding 6,
+  convdiv section, and figure caption updated.
