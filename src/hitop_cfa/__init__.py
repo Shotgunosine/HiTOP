@@ -26,6 +26,11 @@ from .stepwise_scalar import (cfa_test_scalar_with_mi,
                               extract_item_mis_from_scalar,
                               load_metric_run)
 from .effect_size import dif_effect_sizes
+from .convdiv import (ALL_HITOP_SCALES, ANX_SCALES, DEP_SCALES,
+                      HITOP_SUM_SCALES, add_core_aliases,
+                      add_core_sum_columns, calc_dhs,
+                      check_convergent_hypotheses, divergent_results_table,
+                      prepare_divergent_data, resolve_cores, run_divergent)
 from .efa import (configural_efa_report, dimensionality_effect_sizes,
                   polychoric_efa)
 from .exhaustive import (exhaustive_cfa_ablations,
