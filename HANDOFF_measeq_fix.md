@@ -961,3 +961,18 @@ the unidimensionality violations — bias / lost power?).**
   construct mislabeling across groups, not power. Also: panic validation
   phi SE is unstable (near-singular info matrix) — CI [-4.9, 6.1] not
   interpretable, point estimates fine.
+
+### Round 14 addendum: achieved-power curves
+
+- NB_invariance_effect_sizes.ipynb gained a power section: Fisher-z power for
+  a two-sided alpha=.05 correlation test with r_obs = r_true * sqrt(omega_h),
+  small-multiples curves at r_true=.15 per (scale, pair) with the
+  unattenuated ideal dashed (data/effect_sizes/power_curves_r15.png), plus a
+  required-n-for-80%-power table at r_true=.10/.15/.20
+  (power_required_n.csv). Low-phi rows marked with a dagger (upper bounds
+  only; general factor undefined there).
+- Headline numbers at r_true=.15 (ideal n80 = 346): SCT gp_en enriched needs
+  591 (+244); most violations cost +60-190; social anxiety/inattention
+  genpop-side barely +50-80. Dagger rows (GAD gp_t2 8463, inattention gp_t2
+  2280) are not meaningful as power losses -- conflation-range reading
+  applies.
