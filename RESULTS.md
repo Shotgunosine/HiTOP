@@ -44,8 +44,10 @@ preregistered methods are listed explicitly in
    sets (`NB_core_effects.ipynb`).
 7. **Test–retest reliability is good-to-excellent and survives item
    removal.** Combined-sample ICC(2,1): instrument totals .87–.93; HiTOP
-   subscales .77–.90. Invariant cores lose at most .07 ICC relative to
-   their full scales (median loss ≈ .02) (`NB_3_ICC.ipynb`).
+   subscales .77–.90. Under both core sets (the preregistered GP–EN cores
+   and the stricter triply invariant cores), invariant cores lose at most
+   .07 ICC relative to their full scales (median loss ≈ .02)
+   (`NB_3_ICC.ipynb`).
 
 ## Confirmatory vs exploratory
 
@@ -246,15 +248,25 @@ ICC(2,1) with 95% CIs, computed in `NB_3_ICC.ipynb` on the recontact
 cohort (GP and EN separately and combined; tables in `data/icc/`).
 Combined-sample highlights: HiTOP total .93 [.92, .94]; PHQ-8 .91; BAARS
 total .90; GAD-7 .87; HiTOP subscales range .77 (hyposomnia) to .90
-(anhedonic depression, anxious worry, social anxiety). Invariant-core
-ICCs (combined sample) stay close to their full scales — largest drops
-are well_being .87 → .80 and panic .86 → .80; most lose ≤ .03.
+(anhedonic depression, anxious worry, social anxiety).
+
+Core ICCs are reported for **both core sets**. The **GP–EN cores** are the
+preregistered set for this analysis (the prereg ties combined-sample core
+ICCs to GP–EN invariance): the 9 reduced cores span .70–.88, with the
+largest drops on the two 3-item cores — hyposomnia .77 → .70 and
+situational phobia .80 → .74 — and anhedonic depression .90 → .85; the
+other five scales are full-scale invariant between GP and EN, so their
+full-scale ICCs stand. The **triply invariant cores** (exploratory here;
+stricter derivation) span .75–.88, largest drops well_being .87 → .80 and
+panic .86 → .80. Under either set the reliability cost of item removal is
+at most .07 ICC, and the other-scale cores barely move (PHQ-8 .91 → .90,
+inattention .88 → .86, SCT .88 → .86).
 
 ![ICC forest plot](figures/icc_forest.png)
 
-*ICC(2,1) with 95% CIs, combined GP+EN sample: full scales vs stepwise
-invariant cores, with Koo–Li interpretive bands. Generated in
-`notebooks/NB_icc_plots.ipynb`.*
+*ICC(2,1) with 95% CIs, combined GP+EN sample: full scales vs the
+preregistered GP–EN cores and the triply invariant cores, with Koo–Li
+interpretive bands. Generated in `notebooks/NB_icc_plots.ipynb`.*
 
 ## Convergent and divergent validity with invariant cores
 

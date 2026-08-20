@@ -1017,3 +1017,26 @@ stepwise-only core assembly).**
 - Pending (recorded in RESULTS.md): gp_val/en_val two-way runs never
   executed (dirs only have temp/); anhedonic 3-way exhaustive incomplete;
   social_anxiety + well_being exhaustive not yet searched.
+
+### Round 15 addendum: ICC cores now report BOTH sets (author choice: option 2)
+
+- Author question exposed that the ICC core rows mixed sets (HiTOP =
+  3-way cores, other scales = gp_en cores) while the prereg specifies
+  GP-EN cores for the combined-sample ICC. Chosen fix: report both.
+- NB_3_ICC assembly rewritten: PRIMARY = gp_en stepwise cores
+  ('hitop_{scale}__invcore' / bare-name full-scale rows -- this also makes
+  cores.pkl's resolver semantics prereg-faithful for NB_4-style
+  consumers); SECONDARY = triply invariant stepwise cores, reduced rows
+  only, suffix '__3way_invcore'; other-scale gp_en cores unchanged. New
+  core_set column ('gp_en' / '3way' / 'other_gp_en'). cores.pkl now 26
+  rows. Re-executed clean.
+- NB_icc_plots: series split now on '__3way' (internal '_ex' column
+  suffix retained), final-figure labels 'GP-EN Invariant Core' /
+  'Triple (3-way) Invariant Core'; figures/icc_forest.png regenerated
+  with all three series.
+- Results: gp_en cores span .70-.88 (largest drops: 3-item hyposomnia
+  .77->.70, 3-item situational_phobia .80->.74, anhedonic .90->.85; five
+  scales full-scale invariant so no core row); 3way cores .75-.88 (max
+  drops well_being/panic -.07/-.06). RESULTS.md ICC section + finding 7
+  updated to label gp_en as the preregistered set and 3way as
+  exploratory-for-ICC.
