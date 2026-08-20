@@ -867,3 +867,36 @@ sum-score analyses are far less threatened than the raw configural
 failure suggested, though the cancellation is item-profile-dependent
 and the structure difference stands. Section D (exhaustive) runs at
 1000 iters via the runner.
+
+## PROGRESS -- round 12 (2026-08-20): DIF effect sizes with CIs for all pairwise violations
+
+New: hitop_cfa.dif_effect_sizes (src/hitop_cfa/effect_size.py) -- for one
+scale on one 2-group pair, decomposes non-invariance from the single
+METRIC-model fit: uniform severity shift alpha = GLS projection of the
+free group-2 intercepts on the loadings (weights = robust vcov block;
+numerically close to the scalar-model MLE, validated on the PHQ anchor:
++1.112 vs +1.142), non-uniform DIF d_i = nu_i - lambda_i*alpha, signed
+item bias / dMACS / net & gross sum-score bias integrated over
+N(alpha, psi2), with 95% CIs by simulating the free parameters from the
+fit's robust covariance (single-model formulation keeps CIs coherent;
+this is why alpha is a projection rather than the scalar-fit MLE).
+
+notebooks/NB_invariance_effect_sizes.ipynb (executed; outputs in
+data/effect_sizes/: pairwise_dif_summary.csv + per-item csv + forest
+plot) covers every full-original-scale violation across HiTOP x
+{val_gp, val_en, gp_en} and PHQ/GAD/BAARS x {gp_en + 4 wave pairs}:
+49 violations, all converged.
+
+HEADLINE: item-level DIF is real -- 109 of 328 item x pair DIF
+estimates have 95% CIs excluding zero (largest: situational_phobia
+hitop225 val_gp dMACS .49; phq_8 gp1_en2 .39; hyposomnia hitop231 .35
+REPLICATED across val_en and gp_en) -- but it CANCELS at the sum level:
+only 1 of 49 violations has a net sum-bias CI excluding zero
+(situational_phobia val_gp, -0.29 points [-0.46, -0.05]), and gross
+|bias| ceilings are <= ~5% of scale range everywhere. Real severity
+gaps dwarf measurement bias on the gp_en-type contrasts (e.g.
+anhedonic_depression gp_en: +8.4 points real vs +0.2 [-0.1, 0.8] bias).
+Manuscript framing: exact permutation tests detect genuine but small,
+mutually-cancelling item DIF; sum-score comparisons are barely
+distorted, though item-level/reweighted uses do not inherit the
+cancellation.
