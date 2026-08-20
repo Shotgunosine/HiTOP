@@ -259,15 +259,20 @@ situational phobia .80 → .74 — and anhedonic depression .90 → .85; the
 other five scales are full-scale invariant between GP and EN, so their
 full-scale ICCs stand. The **triply invariant cores** (exploratory here;
 stricter derivation) span .75–.88, largest drops well_being .87 → .80 and
-panic .86 → .80. Under either set the reliability cost of item removal is
-at most .07 ICC, and the other-scale cores barely move (PHQ-8 .91 → .90,
-inattention .88 → .86, SCT .88 → .86).
+panic .86 → .80. The **EN–VAL pairwise cores** (exploratory; from
+`NB_2_cfa_as_reg_en_val.ipynb`) span .68–.87 across their 9 reduced
+cores, the lowest being the 3-item hyposomnia core (.77 → .68) and
+anhedonic depression's 3-item core (.90 → .81). Under every set the
+reliability cost of item removal stays under .10 ICC (usually ≤ .03), and
+the other-scale cores barely move (PHQ-8 .91 → .90, inattention
+.88 → .86, SCT .88 → .86).
 
 ![ICC forest plot](figures/icc_forest.png)
 
 *ICC(2,1) with 95% CIs, combined GP+EN sample: full scales vs the
-preregistered GP–EN cores and the triply invariant cores, with Koo–Li
-interpretive bands. Generated in `notebooks/NB_icc_plots.ipynb`.*
+preregistered GP–EN cores, the triply invariant cores, and the EN–VAL
+pairwise cores, with Koo–Li interpretive bands. Generated in
+`notebooks/NB_icc_plots.ipynb`.*
 
 ## Convergent and divergent validity with invariant cores
 

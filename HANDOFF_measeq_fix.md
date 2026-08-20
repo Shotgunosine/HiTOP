@@ -1078,3 +1078,15 @@ stepwise-only core assembly).**
   -> 3-item scalar core {160,254,268}, matching the 3-way stepwise, the
   exhaustive certificate, and the gp_en core. RESULTS.md pending list
   updated (gp_val remains the only unrun two-way).
+
+### Round 15 addendum 5: EN-VAL cores added to the ICC comparison
+
+- NB_3_ICC assembles a third HiTOP core set from
+  data/cfa_en_val/stepwise_scalar.pkl (reduced rows only, suffix
+  '__enval_invcore', core_set 'en_val', confirmatory=False). cores.pkl
+  now 35 rows; invariantonly ICC tables gained 9 EN-VAL rows (.68-.87;
+  lowest hyposomnia .68, anhedonic .81).
+- NB_icc_plots: three-way series split ('' / '__3way' / '__enval'),
+  fourth series in the final forest (red, offset -2), legend
+  'EN-VAL Invariant Core'. figures/icc_forest.png regenerated; RESULTS.md
+  ICC section/caption updated.
