@@ -1054,3 +1054,17 @@ stepwise-only core assembly).**
   but not gp_en p=.15). Core scoring changes no preregistered validity
   conclusion relative to full-scale scoring. RESULTS.md finding 6,
   convdiv section, and figure caption updated.
+
+### Round 15 addendum 3: talk figures + en_val pairwise run launched
+
+- New notebooks/NB_talk_figures.ipynb (executed): six slide-ready figures
+  in figures/talk/ for the author's 15-minute talk (16:9, white, Arial;
+  headings black 25, body grey 18). Conceptual: invariance ladder
+  schematic, violation-type IRT curves. Data (insomnia, VAL vs EN):
+  permutation-p ladder (.81/.69/.60/<.001), expected item-score curves at
+  matched severity (hitop261 highlighted; params extracted from the
+  fit_metric_es left in R by dif_effect_sizes), real-gap vs
+  measurement-bias decomposition (+0.74 vs -0.07 pts), core-repair
+  summary (3-item core, ICC .82 unchanged, C6 r=.74).
+- NB_2_cfa_as_reg_en_val.ipynb launched in background (user request;
+  rehearsal data present in data/rehearsal_en_val) -> data/cfa_en_val.
