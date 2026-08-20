@@ -900,3 +900,27 @@ Manuscript framing: exact permutation tests detect genuine but small,
 mutually-cancelling item DIF; sum-score comparisons are barely
 distorted, though item-level/reweighted uses do not inherit the
 cancellation.
+
+## PROGRESS -- round 13 (2026-08-20): per-group EFAs for configural failures
+
+New: hitop_cfa.polychoric_efa / configural_efa_report
+(src/hitop_cfa/efa.py) -- per group: polychoric eigenvalues, 1-factor
+WLSMV fit + standardized loadings + largest residual correlations, and
+a 2-factor geomin EFA when identified (>= 5 items; the module documents
+the identification rule). Validated against the PHQ section-B anchor
+(identical eigenvalues and fits). Wired into
+NB_invariance_effect_sizes.ipynb as a final section over every
+configural-level violation (executed; 40 group rows, 11 scales, zero
+errors; data/effect_sizes/configural_efa_summary.csv).
+
+META-PATTERN: configural failures are consistently driven by EXTRA
+DIMENSIONALITY ON THE ENRICHED SIDE. BAARS SCT is the extreme case
+(enriched eig2 = 1.11-1.17 > 1, 1-factor CFI .65-.73, RMSEA .21-.24,
+2-factor sometimes non-convergent, vs genpop eig2 .68-.77); PHQ-8
+replicates its somatic/affective enriched split across all three
+comparisons involving an enriched group (enriched eig2 ~ .96-1.01,
+2F CFI gain .078-.096 vs genpop ~ .03); GAD (gp2_en1) and well_being
+(val_en) show the same asymmetry. Exception: hyposomnia val_gp, where
+GENPOP is the poorly-unidimensional group (CFI .846, RMSEA .297 vs
+validation .958). Recurring residual doublets name the clusters (e.g.
+sct_7~sct_3, phq_8~phq_7, inattention_8~inattention_4).
