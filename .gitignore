@@ -1,6 +1,18 @@
 # log files
 my_log*
 logs/
+log/
+
+# crash dumps from permutation runs
+crashes/
+
+# data files (git add -f to track specific files)
+data/
+*.csv
+*.tsv
+*.pkl
+*.rds
+*.xlsx
 
 # notebook checkpoints
 .ipynb_checkpoints/
@@ -23,3 +35,10 @@ archive/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# python bytecode
+__pycache__/
+*.pyc
+
+# rehearsal artifacts (patched notebook copies with outputs)
+notebooks/zz_rehearsal_*.ipynb

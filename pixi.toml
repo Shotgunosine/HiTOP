@@ -2,7 +2,7 @@
 authors = ["Dylan Nielson <adenosine@gmail.com>"]
 channels = ["conda-forge", "main", "r", "msys2"]
 name = "env_semtools_fix"
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "osx-64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
@@ -24,7 +24,16 @@ r-mass = ">=7.3_60.0.1,<8"
 r-matrix = ">=1.6_5,<2"
 r-devtools = ">=2.4.5,<3"
 
+[pypi-dependencies]
+hitop-cfa = { path = ".", editable = true }
+
 [activation.env]
 OPENBLAS_NUM_THREADS = "1"
 MKL_NUM_THREADS = "1"
 OMP_NUM_THREADS = "1"
+
+[feature.dev.dependencies]
+nbdime = "*"
+
+[environments]
+dev = ["dev"]

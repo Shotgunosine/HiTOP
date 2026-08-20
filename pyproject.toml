@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hitop-cfa"
+version = "0.1.0"
+description = "CFA measurement-invariance machinery shared by the HiTOP validation notebooks"
+requires-python = ">=3.11"
+# Runtime dependencies (pandas, numpy, rpy2, openpyxl, R + lavaan/semTools)
+# are provided by the conda side of the pixi environment; declaring them here
+# would make pip/uv install duplicate copies from PyPI.
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hitop_cfa"]
