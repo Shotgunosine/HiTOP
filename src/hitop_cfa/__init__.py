@@ -26,7 +26,8 @@ from .stepwise_scalar import (cfa_test_scalar_with_mi,
                               extract_item_mis_from_scalar,
                               load_metric_run)
 from .effect_size import dif_effect_sizes
-from .efa import configural_efa_report, polychoric_efa
+from .efa import (configural_efa_report, dimensionality_effect_sizes,
+                  polychoric_efa)
 from .exhaustive import (exhaustive_cfa_ablations,
                          exhaustive_search_scale,
                          screened_ladder_test,

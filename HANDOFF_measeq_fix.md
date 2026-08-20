@@ -924,3 +924,40 @@ comparisons involving an enriched group (enriched eig2 ~ .96-1.01,
 GENPOP is the poorly-unidimensional group (CFI .846, RMSEA .297 vs
 validation .958). Recurring residual doublets name the clusters (e.g.
 sct_7~sct_3, phq_8~phq_7, inattention_8~inattention_4).
+
+## PROGRESS round 14 (2026-08-20)
+
+**Dimensionality effect sizes (answering: can we quantify the effect size of
+the unidimensionality violations — bias / lost power?).**
+
+- New `hitop_cfa.efa.dimensionality_effect_sizes(scalename, items, data_group,
+  temp_path)`: per group, fits the 2-factor geomin EFA and converts it to
+  decision-relevant effect sizes via the **exact** Schmid–Leiman identity for
+  two correlated factors (general paths a1 = a2 = sqrt(phi) reproduce
+  Lambda*Phi*Lambda' identically; verified algebraically). Returns:
+  phi [95% CI from lavaan's post-rotation SE], ECV, omega_h, omega_t
+  (standardized latent-response scale), attenuation = sqrt(omega_h)
+  (multiplier on any criterion correlation running through the general factor
+  when the sum score is used), n_inflation = 1/omega_h (required-sample
+  multiplier for such correlations), and corr(sum, F1)/corr(sum, F2) (the
+  conflation range). Sign-flips factor 2 when geomin returns negative phi.
+  2-factor gate + convergence guards as in polychoric_efa.
+- Notebook section appended to NB_invariance_effect_sizes.ipynb over the same
+  40 configural-failure group rows; outputs
+  data/effect_sizes/dimensionality_effect_sizes.csv; between-group
+  required-n ratio table. Executed clean (exit 0).
+- Results: 32/40 groups converged. Headline: SCT gp_en enriched phi=.52
+  [.42,.63], omega_h=.59 -> criterion correlations attenuated x.77,
+  required n inflated 1.70x (vs genpop 1.23x -> ~1.4x relative power cost of
+  pooling/using enriched sums). Most scales sit at omega_h .70-.86
+  (attenuation .84-.93, n_inflation 1.2-1.5x). The 8 non-convergent groups
+  are the worst cases (SCT/hyperactivity enriched waves, hyposomnia both
+  val_gp groups) — no numbers, but non-convergence itself indicates
+  worse-than-2-factor structure.
+- Interpretation caveat recorded in the notebook: when phi ~ 0 (inattention
+  gp_t2 phi=.15, GAD gp_t2 phi=-.04) the general factor is undefined and
+  omega_h/n_inflation overstate damage; read the conflation range instead —
+  both sums still correlate ~.98 with ONE factor, so the issue there is
+  construct mislabeling across groups, not power. Also: panic validation
+  phi SE is unstable (near-singular info matrix) — CI [-4.9, 6.1] not
+  interpretable, point estimates fine.
