@@ -1090,3 +1090,16 @@ stepwise-only core assembly).**
   fourth series in the final forest (red, offset -2), legend
   'EN-VAL Invariant Core'. figures/icc_forest.png regenerated; RESULTS.md
   ICC section/caption updated.
+
+### Round 15 addendum 6: en_val cores in the validity comparison
+
+- Author correction: the fourth validity scoring should be EN-VAL, not
+  GP-VAL. The briefly-started gp_val pipeline run was stopped harmlessly
+  (nbconvert writes only on completion; resumable partials may sit in
+  data/cfa_gp_val).
+- NB_core_effects gained run_validity('en_val', ...) (criteria
+  full-scale; cognitive_problems/indecisiveness full-scale fallback) and
+  the comparison figure now shows four scorings with ICC-forest-matched
+  colors. Results: same support pattern (C1-C7, D1, D2 yes; D3-D5 no);
+  15/16 outcomes agree across all four scorings (exd4 again the sole
+  divergence). convdiv_en_val.csv added; RESULTS.md updated.

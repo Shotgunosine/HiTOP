@@ -277,45 +277,46 @@ pairwise cores, with Koo–Li interpretive bands. Generated in
 ## Convergent and divergent validity with invariant cores
 
 `NB_core_effects.ipynb` runs the preregistered hypotheses (via
-`hitop_cfa.convdiv`, a faithful extraction of `NB_4_convdiv.ipynb`) three
+`hitop_cfa.convdiv`, a faithful extraction of `NB_4_convdiv.ipynb`) four
 times: with the confirmatory **GP–EN cores** (criterion sums also
 core-based: PHQ-8 from its metric core, BAARS total using the inattention
-core), with the exploratory **triple cores** (criteria full-scale), and
-with the **original full scales** (no core substitution) as the reference
-scoring. Tables: `data/core_effects/convdiv_{gp_en,triple,full_scale}.csv`.
+core), with the exploratory **triple cores** and **EN–VAL pairwise cores**
+(criteria full-scale in both), and with the **original full scales** (no
+core substitution) as the reference scoring. Tables:
+`data/core_effects/convdiv_{gp_en,triple,en_val,full_scale}.csv`.
 
-**Convergent (all seven supported under all three scorings):** C1
+**Convergent (all seven supported under all four scorings):** C1
 anhedonic depression ~ PHQ-8 Spearman r = .90 (full) / .88 (triple) / .80
-(gp_en cores); C2 well-being ~ PHQ-8 r = −.55 / −.53 / −.53; C3 anxious
-worry ~ GAD-7 r = .90 / .88 / .89; C4 appetite ~ PHQ item 5 r = .75 / .74
-/ .77; C5 cognitive problems ~ PHQ item 7 r = .81 (all); C6 insomnia ~
-PHQ item 3 r = .71 / .74 / .74; C7 HiTOP sum predicting
-mood/anxiety-bothered, z ≈ 14.5, p < 1e-46 (and within each sample
-separately).
+(gp_en cores) / .78 (en_val cores); C2 well-being ~ PHQ-8 r = −.55 / −.53
+/ −.53 / −.49; C3 anxious worry ~ GAD-7 r = .90 / .88 / .89 / .87; C4
+appetite ~ PHQ item 5 r = .74–.77; C5 cognitive problems ~ PHQ item 7
+r = .81 (all); C6 insomnia ~ PHQ item 3 r = .71 (full) / .74 (all cores);
+C7 HiTOP sum predicting mood/anxiety-bothered, z ≈ 14.3–14.5, p < 1e-45
+(and within each sample separately).
 
 **Divergent (1000 stratified permutations, 1000 bootstraps):**
 
-| hypothesis | full scales | gp_en cores | triple cores | verdict |
-|---|---|---|---|---|
-| D1 HiTOP↔GAD/PHQ > HiTOP↔BAARS | Δρ = .105, p = .001 | Δρ = .101, p = .001 | Δρ = .100, p = .001 | **supported** |
-| D2 HiTOP → mood/anx-bothered > attention-bothered | ΔMI = .196, p = .001 | ΔMI = .153, p = .001 | ΔMI = .141, p = .001 | **supported** |
-| D3 BAARS → attention > mood/anx | ΔMI = −.071, p = .98 | ΔMI = −.094, p = 1.0 | ΔMI = −.071, p = .98 | **not supported** (direction reversed: BAARS predicted mood/anxiety-bothered slightly *better*) |
-| D4 HiTOP-mood → mood > anxiety | ΔMI = .027, p = .16 | ΔMI = .034, p = .11 | ΔMI = .008, p = .51 | not supported |
-| D5 HiTOP-anx → anxiety > mood | ΔMI = −.002, p = .36 | ΔMI = .007, p = .18 | ΔMI = .009, p = .16 | not supported |
+| hypothesis | full scales | gp_en cores | triple cores | en_val cores | verdict |
+|---|---|---|---|---|---|
+| D1 HiTOP↔GAD/PHQ > HiTOP↔BAARS | Δρ = .105, p = .001 | Δρ = .101, p = .001 | Δρ = .100, p = .001 | Δρ = .092, p = .001 | **supported** |
+| D2 HiTOP → mood/anx-bothered > attention-bothered | ΔMI = .196, p = .001 | ΔMI = .153, p = .001 | ΔMI = .141, p = .001 | ΔMI = .147, p = .001 | **supported** |
+| D3 BAARS → attention > mood/anx | ΔMI = −.071, p = .98 | ΔMI = −.094, p = 1.0 | ΔMI = −.071, p = .98 | ΔMI = −.071, p = .98 | **not supported** (direction reversed: BAARS predicted mood/anxiety-bothered slightly *better*) |
+| D4 HiTOP-mood → mood > anxiety | ΔMI = .027, p = .16 | ΔMI = .034, p = .11 | ΔMI = .008, p = .51 | ΔMI = .008, p = .51 | not supported |
+| D5 HiTOP-anx → anxiety > mood | ΔMI = −.002, p = .36 | ΔMI = .007, p = .18 | ΔMI = .009, p = .16 | ΔMI = −.001, p = .32 | not supported |
 
 The exploratory single-scale variants: exd5 (anxious worry alone → anxiety
-specificity) is supported under all three scorings; exd4 (anhedonic
+specificity) is supported under all four scorings; exd4 (anhedonic
 depression alone → mood specificity) is supported under the full scales
-(p = .013) and triple cores (p = .040) but not the gp_en cores (p = .15) —
-the sole hypothesis whose outcome differs (15/16 agree across all three).
-Core scoring therefore changes no preregistered validity conclusion
-relative to full-scale scoring.
+(p = .013) and triple cores (p = .040) but not the gp_en cores (p = .15)
+or the en_val cores (p = .36) — the sole hypothesis whose outcome differs
+(15/16 agree across all four). Core scoring therefore changes no
+preregistered validity conclusion relative to full-scale scoring.
 
-![Validity hypotheses under the three scorings](figures/convdiv_core_comparison.png)
+![Validity hypotheses under the four scorings](figures/convdiv_core_comparison.png)
 
 *Point estimates with 95% CIs per hypothesis × scoring (original full
-scales, triple cores, GP–EN cores). Generated in
-`notebooks/NB_core_effects.ipynb`.*
+scales, GP–EN cores, triple cores, EN–VAL cores; colors match the ICC
+forest). Generated in `notebooks/NB_core_effects.ipynb`.*
 
 ## Effect sizes of the invariance violations (exploratory)
 
