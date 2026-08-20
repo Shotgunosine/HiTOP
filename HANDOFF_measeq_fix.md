@@ -976,3 +976,44 @@ the unidimensionality violations — bias / lost power?).**
   genpop-side barely +50-80. Dagger rows (GAD gp_t2 8463, inattention gp_t2
   2280) are not meaningful as power losses -- conflation-range reading
   applies.
+
+## PROGRESS round 15 (2026-08-20)
+
+**Core-effects notebook, ICC/validity chain rebuilt post-measEq, and
+RESULTS.md (per approved plan; author decisions: effects = effect-size
+suite AND prereg C/D; cores = stepwise only; gp_en other cores incl. PHQ
+stepwise metric fallback; ICC gap closed by adapting NB_3 to
+stepwise-only core assembly).**
+
+- New src/hitop_cfa/convdiv.py: faithful extraction of NB_4_convdiv's
+  C1-C7/D1-D5 machinery (pingouin Spearman, logistic C7, MI-based D2-D5,
+  sample_type-stratified 1000-permutation p's, 1000 frac=.8 bootstraps),
+  parameterized by cores frame / column lists / rng.
+- New notebooks/NB_core_effects.ipynb (executed clean): core inventory;
+  residual-DIF effect sizes on all 50 core x pair combos (0 errors;
+  item CIs excluding zero 46/218 vs 109/328 full-scale; net CIs 1/50 --
+  only situational_phobia val_gp, whose triple core IS the full scale);
+  dimensionality/power on cores (some enriched-side multidimensionality
+  survives: gp_en sep_insec EN omega_h .54); C/D hypotheses under both
+  core sets (C1-C7 all supported both sets; D1 D2 supported; D3 reversed
+  sign, not supported; D4 D5 ns; 15/16 outcomes agree, exd4 differs).
+  Outputs data/core_effects/; figures figures/{core_vs_full_dif,
+  convdiv_core_comparison}.png.
+- NB_3_ICC adapted: core assembly now stepwise-only (final_cores
+  unchanged; exhaustive.pkl dependency REMOVED; other cores from
+  cfa_other_gp_en stepwise, core_level carried -- phq metric). Executed:
+  data/icc rebuilt post-measEq (cores.pkl 13 rows). ICCs: totals .87-.93,
+  HiTOP subscales .77-.90; cores lose <=.07 (well_being .87->.80).
+- NB_icc_plots: guards absent exhaustive series, stale hitop_panic ICC_ex
+  blanking removed, final forest saved to figures/icc_forest.png.
+  NB_invariance_plot heatmap -> figures/invariance_ladder_heatmap.png.
+  NB_invariance_effect_sizes forest -> figures/dif_forest.png (+ power
+  curves copied to figures/). All re-executed exit 0.
+- RESULTS.md at repo root: top-level findings; confirmatory/exploratory
+  map per prereg.txt; explicit prereg deviations (W&E ID vs marker item,
+  thresholds tier, omnibus+modindices at scalar, full-scale fallback vs
+  enriched-only, RMSEA .6 typo); every number/figure attributed to its
+  generating notebook.
+- Pending (recorded in RESULTS.md): gp_val/en_val two-way runs never
+  executed (dirs only have temp/); anhedonic 3-way exhaustive incomplete;
+  social_anxiety + well_being exhaustive not yet searched.
