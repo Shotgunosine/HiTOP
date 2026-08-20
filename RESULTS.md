@@ -406,8 +406,13 @@ From `NB_phq8_gp_en_followup.ipynb` (`data/cfa_phq8_followup/`):
 - `NB_4_convdiv.ipynb` is superseded for reporting by
   `NB_core_effects.ipynb` (same code via `hitop_cfa.convdiv`; NB_4 can
   now also run as written since `data/icc/cores.pkl` exists).
-- Not yet run: the gp_val and en_val two-way stepwise notebooks
-  (`NB_2_cfa_as_reg_gp_val.ipynb`, `NB_2_cfa_as_reg_en_val.ipynb` —
-  prepared, output dirs empty); the anhedonic_depression 3-way exhaustive
-  search (incomplete) and the social_anxiety / well_being exhaustive
-  searches (queued for HPC, see `HPC.md`).
+- The en_val two-way stepwise run (`NB_2_cfa_as_reg_en_val.ipynb`,
+  results in `data/cfa_en_val/`) completed 2026-08: 12 of 14 scales reach
+  a pair-specific core (10 scalar-level — including insomnia's 3-item
+  core {160, 254, 268}, identical to the 3-way core — 2 metric;
+  cognitive_problems and indecisiveness none).
+- Not yet run: the gp_val two-way stepwise notebook
+  (`NB_2_cfa_as_reg_gp_val.ipynb` — prepared, output dir empty); the
+  anhedonic_depression 3-way exhaustive search (incomplete) and the
+  social_anxiety / well_being exhaustive searches (queued for HPC, see
+  `HPC.md`).

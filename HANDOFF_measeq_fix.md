@@ -1068,3 +1068,13 @@ stepwise-only core assembly).**
   summary (3-item core, ICC .82 unchanged, C6 r=.74).
 - NB_2_cfa_as_reg_en_val.ipynb launched in background (user request;
   rehearsal data present in data/rehearsal_en_val) -> data/cfa_en_val.
+
+### Round 15 addendum 4: en_val pairwise run complete
+
+- NB_2_cfa_as_reg_en_val.ipynb executed clean (user-authorized background
+  run) -> data/cfa_en_val. 12/14 scales reach pair-specific cores (10
+  scalar, 2 metric; none for cognitive_problems/indecisiveness).
+  Insomnia reproduces the talk story exactly: scalar tier drops hitop261
+  -> 3-item scalar core {160,254,268}, matching the 3-way stepwise, the
+  exhaustive certificate, and the gp_en core. RESULTS.md pending list
+  updated (gp_val remains the only unrun two-way).
