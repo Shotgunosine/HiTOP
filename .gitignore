@@ -20,6 +20,9 @@ data/
 # old files
 archive/
 
+# vendored external repos (see notebooks/build_hitopsr_crosswalk.py for provenance)
+external/
+
 .DS_Store
 # History files
 .Rhistory

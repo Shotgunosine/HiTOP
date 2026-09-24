@@ -1,0 +1,17 @@
+our_subscale,our_n_items,n_exact_in_sr,n_rewrite_in_sr,sr_scale,sr_subscale,sr_spectrum,sr_scale_n_items,sr_scale_n_items_from_our_pool
+anhedonic_depression,10,3,0,Distress-Dysphoria,Anhedonia,Internalizing,3,1
+anhedonic_depression,10,3,0,Distress-Dysphoria,Depressed Mood,Internalizing,4,1
+anhedonic_depression,10,3,0,Distress-Dysphoria,Lassitude,Internalizing,3,1
+anxious_worry,7,3,0,Distress-Dysphoria,Anxious Worry,Internalizing,3,3
+appetite_gain,4,0,0,DROPPED (no SR counterpart),,,0,0
+appetite_loss,3,3,0,Appetite Loss,,Internalizing,3,3
+cognitive_problems,4,2,0,Cognitive Problems,,Internalizing,5,2
+hyposomnia,5,2,0,Manic Energy,,Internalizing-Thought Disorder,7,2
+indecisiveness,3,0,0,DROPPED (no SR counterpart),,,0,0
+insomnia,4,3,1,Insomnia,,Internalizing,4,4
+panic,6,3,0,Panic,,Internalizing,5,3
+separation_insecurity,8,0,0,DROPPED (no SR counterpart),,,0,0
+shame_guilt,4,2,1,Distress-Dysphoria,Shame/Guilt,Internalizing,3,3
+situational_phobia,5,4,0,Specific Phobia Index,Situational Phobias,Internalizing,4,4
+social_anxiety,10,4,1,Social Anxiety,,Detachment,5,5
+well_being,10,4,0,Well-being,,Detachment,5,4
