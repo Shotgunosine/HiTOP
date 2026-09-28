@@ -127,7 +127,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .r_env import ro, set_seeds
+from .r_env import RRuntimeError, ro, set_seeds
 from .fit import (LEVEL_NAMES, check_secondary_criteria, extract_p,
                   permute_measeq_with_retry, push_model_to_r)
 from .measeq import (LEVEL_NEW_PARAMS, WU_ESTABROOK_LEVELS,
@@ -203,9 +203,26 @@ def screened_ladder_test(scalename, list_of_items, datasets, temp_path,
             assert_level_adds_df(f'fit_{prev_level}', f'fit_{level}',
                                  prev_level, level)
             # parametric pre-screen (delta levels only; NEVER configural)
-            param_p = float(ro.r(
-                f'lavaan::lavTestLRT(fit_{prev_level}, fit_{level})'
-                f'[2, "Pr(>Chisq)"]')[0])
+            # A converged-but-degenerate fit (uninvertible information
+            # matrix / negative ov variances) passes fit_is_converged but
+            # makes the scaled difference test uncomputable (R error in
+            # m_a %*% p_inv) or NA. Such a subset cannot be certified
+            # invariant; treat it like non-convergence and move on.
+            try:
+                param_p = float(ro.r(
+                    f'lavaan::lavTestLRT(fit_{prev_level}, fit_{level})'
+                    f'[2, "Pr(>Chisq)"]')[0])
+            except RRuntimeError:
+                param_p = float('nan')
+            if math.isnan(param_p):
+                records.append(dict(pair=pair, level=level,
+                                    status='degenerate', perm_p=None,
+                                    param_p=None))
+                pair_ps[pair] = [ps[n] for n in LEVEL_NAMES]
+                return dict(passed=False, pair_ps=pair_ps, records=records,
+                            fail=dict(pair=pair, level=level,
+                                      reason='degenerate', param_p=None,
+                                      perm_p=None))
             if param_p < alpha_screen:
                 records.append(dict(pair=pair, level=level,
                                     status='screened', perm_p=None,
