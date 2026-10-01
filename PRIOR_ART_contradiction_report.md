@@ -41,9 +41,11 @@ the verdicts below (same commit).
     not general web search.
   - OpenAlex's free daily budget for list queries ran out partway through C5.
     That budget is shared across the NIH network IP and resets at midnight
-    UTC. The remaining cited-by walks used Semantic Scholar, which indexes
-    fewer citations (Asparouhov & Muthén 2014: 78 citing works in S2 vs 804
-    in OpenAlex).
+    UTC. The remaining cited-by walks first used Semantic Scholar, which
+    indexes fewer citations (Asparouhov & Muthén 2014: 78 citing works in S2
+    vs 804 in OpenAlex). **All of those walks were later re-run in OpenAlex
+    with the author's API key, and Chen 2007 was added** (see the addendum
+    at the end). No verdict changed.
   - Google Scholar was not used.
 - **What "verified" means.** "Full text" means I read the quoted passage in a
   PMC copy, an OA copy, or a preprint (the copy is named). "Abstract" means
@@ -1134,6 +1136,131 @@ invariance tests." Not supported, so do not attribute it to them.
    - Cole (2026), a trifactor recall-window talk (C1).
    - The Lasker–Protzko exchange (C8), which is live.
    - The full text of Kuharic et al. 2026, read at abstract only.
-   - A re-run of the Chen 2007 and Asparouhov & Muthén 2014 cited-by walks
-     in OpenAlex once its daily budget resets, since the Semantic Scholar
-     coverage used here is thinner.
+   - ~~A re-run of the Chen 2007 and Asparouhov & Muthén 2014 cited-by walks
+     in OpenAlex.~~ Done; see the addendum below.
+
+---
+
+## Addendum: OpenAlex re-walks (2026-10-01, author's API key)
+
+**What was run.** Every cited-by walk that had fallen back to Semantic
+Scholar was re-run in OpenAlex, with titles and abstracts, plus the Chen 2007
+walk, which had never been run. Citing works fetched per seed:
+
+| Seed | Citing works (with abstract) | Used for |
+|---|---|---|
+| Chen 2007 (10.1080/10705510701301834) | 11,996 (9,413) | C1, C2, C3, C6, C7, C8, C9 |
+| MacCallum et al. 1992 | 1,596 (1,255) | C5 |
+| Asparouhov & Muthén 2014 | 791 (656) | C5 |
+| McNeish & Wolf 2023 (dynamic fit) | 450 (391) | C6 |
+| Yoon & Millsap 2007 | 222 (178) | C5 |
+| Kang et al. 2016 | 110 (89) | C6 |
+| Savalei et al. 2023, by its APA DOI | 80 (67) | C6 |
+| Jung & Yoon 2016 | 74 (56) | C5 |
+| Yoon & Kim 2014 | 53 (42) | C5 |
+| Joo & Kim 2019 | 22 (20) | C7 |
+| Schultze & Eid 2018 | 17 (16) | C5 |
+| Kolbe & Jorgensen 2019 | 13 (12) | C5 |
+| McNeish 2026 | 10 (6) | C6 |
+
+Each list was filtered with claim-specific regular expressions over title and
+abstract. Because nearly every applied invariance paper cites it, the Chen
+2007 list doubled as a second net for C1, C2, C3, C8 and C9. Candidates were
+then read at abstract level, or in full text where noted. Cost was about
+$0.25 of OpenAlex credit. About 21% of Chen 2007's citers have no abstract in
+OpenAlex, so those were screened by title only.
+
+**Result: no verdict changes.** New items, by claim:
+
+- **C1 (stays WEAKENED).** Braun, L., Göllner, R., Rieger, S., Trautwein, U.,
+  & Spengler, M. (2021). How state and trait versions of self-esteem and
+  depressive symptoms affect their interplay: A longitudinal experimental
+  investigation. *Journal of Personality and Social Psychology*, 120(1),
+  206–225. https://doi.org/10.1037/pspp0000295
+  - **Design.** Randomized 2 × 2 longitudinal experiment (N = 683 and
+    N = 1,087 students). Self-esteem and depressive-symptom items were given
+    under "during the last 2 weeks" vs "in general" time frames.
+  - **Quote:** "Because we did not assume that the measurement properties
+    were the same for the state and trait time frames, we did not impose
+    measurement invariance between conditions."
+  - **Verified at:** full text (manuscript draft on the authors' OSF project
+    r7bdt; the published version was not read).
+  - **Why it does not preempt.** It manipulated the manuscript's own two-week
+    window on a depressive-symptom measure, but explicitly did not test
+    invariance across windows; only longitudinal invariance within each
+    condition was tested. It is a useful citation for the point that a window
+    change is assumed to alter measurement but is rarely tested.
+
+- **C2 (stays STANDS).** Three more comparisons; none shows a configural
+  failure at the clinical/community boundary:
+  - Cígler, H., Pátková Daňsová, P., Javůrková, A., Raudenská, J., & Prikner,
+    O. (2026). *Journal of Anxiety Disorders*, 120, 103149.
+    https://doi.org/10.1016/j.janxdis.2026.103149. GAD-7 across 20 samples
+    (N = 5,529): "Measurement invariance up to the residual level was
+    established across gender, clinical status, and time" (abstract). This
+    contrasts with the metric-only GAD-7 result of Doi et al. (2018,
+    *Frontiers*).
+  - Mwangi, P., et al. (2020). *Journal of Affective Disorders Reports*, 1,
+    100013. https://doi.org/10.1016/j.jadr.2020.100013. Swahili PHQ-9 was
+    invariant between adults living with HIV and a community sample
+    (abstract).
+  - Ndukwe, R., Scazufca, M., & Van de Ven, P. (2026). Beyond the total score:
+    Factorial validity of the PHQ-9 in high-symptom contexts. *Journal of
+    Affective Disorders Reports*, 25, 101141.
+    https://doi.org/10.1016/j.jadr.2026.101141. In two samples restricted to
+    PHQ-9 ≥ 10, "the PHQ-9's structure is context-dependent: genuinely
+    multidimensional in the high-burden older cohort, but dominated by a
+    general factor in the broad community sample" (abstract). There was no
+    multigroup configural test between the samples, so it does not preempt
+    C2. It does support the manuscript's explanation of the PHQ-8 failure as a
+    dimensionality asymmetry.
+
+- **C5 (stays WEAKENED).** No exhaustive enumeration, "none exists"
+  certificate, or greedy-lockout demonstration among the citers of
+  Asparouhov & Muthén 2014, MacCallum et al. 1992, or the
+  partial-invariance search papers. The only new neighbors:
+  - Further ACO invariant-item-set papers from the Olaru line: age-invariant
+    personality items (Olaru, Schroeders, Wilhelm & Ostendorf, 2018, *Journal
+    of Personality*, 86(6), 1037–1049, https://doi.org/10.1111/jopy.12373;
+    2019, *European Journal of Personality*, 33(3), 264–278,
+    https://doi.org/10.1002/per.2185).
+  - Cheung, G. W., Hu, C., & Zubielevitch, E. (2026). *Organizational
+    Research Methods*, 29(4), 533–567.
+    https://doi.org/10.1177/10944281261449198. The MEI package rotates
+    reference items systematically and uses "list-and-delete" to identify
+    sets of invariant items. It is a pairwise-comparison procedure, not an
+    exhaustive subset test (abstract).
+
+- **C6 (stays STANDS).** No applied, per-grouping comparison of ΔAFI
+  sensitivity against a calibrated benchmark, and no clinical-vs-community
+  under-detection argument. New neighbors:
+  - Goretzko, D., & Wetzel, E. (2026). Stop using fixed cutoffs to evaluate
+    latent variable models! *European Journal of Psychological Assessment*,
+    42(2), 77–82. https://doi.org/10.1027/1015-5759/a000943. A short piece
+    in an assessment journal that cites McNeish (2026) among its 27
+    references. It is closed access: only the title and reference list were
+    checked, not the text.
+  - Cavicchiolo, E., Manganelli, S., Lucidi, F., & Alivernini, F. (2025).
+    *Journal of Psychoeducational Assessment*, 43(7), 721–742.
+    https://doi.org/10.1177/07342829251354912. Fit was evaluated "with fixed
+    and dynamic fit index cutoffs" and invariance tested across four student
+    subgroups. No per-grouping sensitivity comparison is reported (abstract).
+  - Zhou, J., Rekola, H., Sormunen, M., & Mäki-Opas, T. (2026). *International
+    Journal of Public Health*, 71, 1609337.
+    https://doi.org/10.3389/ijph.2026.1609337. Compared MGCFA with alignment
+    for the HLS-Q12 across four grouping variables, reporting agreement only
+    (abstract).
+
+- **C7 (stays STANDS).** Joo & Kim's 22 OpenAlex citers add nothing beyond
+  Rios 2021 and Cao & Liang 2024. The Chen 2007 filter for
+  misattribution/transfer/masking language found no applied or simulated
+  demonstration of ΔAFIs flagging the wrong level.
+
+- **C8 (stays CONTRADICTED for (1); (2) and (3) STAND).** The Chen 2007
+  reanalysis filter found no same-data reversal beyond Lasker 2024.
+  Goretzko & Wetzel 2026 (above) is in *EJPA*, not *Assessment*.
+
+- **C3, C9 (unchanged).** The Chen 2007 filters surfaced only papers already
+  reported: Kaplan-Kahn et al. 2024 and Clements et al. 2020 for permutation
+  testing. No new end-to-end calibrated-plus-consequence paper on a
+  symptom measure turned up.

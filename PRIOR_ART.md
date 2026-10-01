@@ -217,6 +217,15 @@ rarely asked.
   lifetime vs current symptoms and across samples selected vs not selected for
   psychopathology. None used a calibrated test or a dMACS/expected-score
   consequence analysis (details and quotes in the contradiction report, C1).
+- *Added by the OpenAlex re-walk (2026-10-01).* Braun, Göllner, Rieger,
+  Trautwein & Spengler (2021, *JPSP*) randomly assigned students to
+  depressive-symptom and self-esteem items framed "during the last 2 weeks" or
+  "in general" — the manuscript's own window against a trait frame — and
+  stated: "Because we did not assume that the measurement properties were the
+  same for the state and trait time frames, we did not impose measurement
+  invariance between conditions" (verified at full text, OSF manuscript
+  draft). It is the clearest example that a window change is presumed to alter
+  measurement yet left untested, and a good intro citation for the gap.
 
 **What the manuscript can claim.** The window question is *rarely tested*, not
 untested, and neither the separate-sample design nor the parallel-strata
@@ -279,6 +288,17 @@ those groups compares different measurements.
   stroke (Blake et al., 2025; scalar failed on appetite and tiredness), PHQ-8
   in an HIV clinic (Whittington et al., 2026; scalar held, residual failed),
   and PHQ-8 with vs without chronic pain (De La Rosa et al., 2026).
+- *Added by the OpenAlex re-walk (2026-10-01).* The Czech GAD-7 was invariant
+  through the residual level across clinical status in 20 samples (Cígler et
+  al., 2026) — a contrast with the metric-only GAD-7 result of Doi et al.
+  (2018, *Frontiers*) — and the Swahili PHQ-9 was invariant between adults
+  living with HIV and a community sample (Mwangi et al., 2020). Ndukwe,
+  Scazufca & Van de Ven (2026) found the PHQ-9's structure "context-dependent:
+  genuinely multidimensional in the high-burden older cohort, but dominated by
+  a general factor in the broad community sample," in two samples restricted
+  to PHQ-9 ≥ 10, without a multigroup configural test between them. It does
+  not preempt the configural claim but supports the manuscript's account of
+  the PHQ-8 failure as a dimensionality asymmetry (abstract-level).
 
 **What the manuscript can claim.** A dedicated contradiction search
 (2026-10-01; PubMed, Europe PMC full text, and every PHQ-9 study reviewed by
@@ -387,7 +407,11 @@ across sociodemographic covariates (a method contrast, not a per-grouping
 calibration); Trummer et al. (2026), who reported Δχ²-based Cohen's w beside
 ΔCFI/ΔRMSEA decisions for the German HiTOP-SR across sex, age and SES but
 note these "complemented, but did not alter" the decisions; and Lasker (2024),
-a single-dataset reversal (§9).
+a single-dataset reversal (§9). An assessment-journal piece by Goretzko &
+Wetzel (2026, *EJPA*), "Stop using fixed cutoffs to evaluate latent variable
+models!", cites McNeish's (2026) dynamic invariance cutoffs; it is closed
+access and was checked only by title and reference list, but it is further
+evidence that the criteria critique joins an established line.
 
 ### 5.5 What the manuscript can claim, and how
 
@@ -842,10 +866,13 @@ quotes and verification level there):
    Woods 2009 and Lamela 2020; Semantic Scholar for McNeish 2026 (11 citing),
    Savalei 2023 (79, via its preprint record), Kang 2016, Joo & Kim 2019 and
    the partial-invariance search papers. OpenAlex's free daily budget ran out
-   mid-run, so re-run the large walks (Chen 2007; Asparouhov & Muthén 2014;
-   Savalei 2023 by its APA DOI) in OpenAlex at submission. The HiTOP-SR
-   check found the past-month administration (Mostajabi et al., 2026); re-check
-   for any two-week or invariance-tested version.
+   mid-run; the Semantic Scholar walks were then re-run in OpenAlex with the
+   author's API key, and the Chen 2007 walk (11,996 citing works) was added
+   (contradiction report, addendum). No verdict changed. At submission, re-run
+   only the fast-moving lists (McNeish 2026, Savalei 2023, Maassen 2023,
+   HiTOP-SR) for papers published after 2026-10-01. The HiTOP-SR check found
+   the past-month administration (Mostajabi et al., 2026); re-check for any
+   two-week or invariance-tested version.
 3. *Done 2026-10-01.* The within-study criterion-comparison search found
    nothing (§5.4); the reanalysis search found Lasker (2024) (§9).
 4. *Done 2026-10-01.* Maassen et al.'s recommendations are summarized in §9.
@@ -887,6 +914,11 @@ quotes and verification level there):
   Health Questionnaire-9 in stroke: A comparison with a non-stroke population.
   *Journal of Psychosomatic Research*, 188, 111983.
   https://doi.org/10.1016/j.jpsychores.2024.111983
+- Braun, L., Göllner, R., Rieger, S., Trautwein, U., & Spengler, M. (2021).
+  How state and trait versions of self-esteem and depressive symptoms affect
+  their interplay: A longitudinal experimental investigation. *Journal of
+  Personality and Social Psychology*, 120(1), 206–225.
+  https://doi.org/10.1037/pspp0000295
 - Briers, N., Sanders, M. R., Northam, J. C., Dadds, M. R., & Hawes, D. J.
   (2026). *Psychological Assessment*. https://doi.org/10.1037/pas0001498
 - Buchanan, E. M. (2025; online 2024). Visualizemi: Visualization, effect
@@ -912,6 +944,10 @@ quotes and verification level there):
   measurement invariance test: A cross-country illustration with a scale to
   measure 19 human values. *Frontiers in Psychology*, 5, 982.
   https://doi.org/10.3389/fpsyg.2014.00982
+- Cígler, H., Pátková Daňsová, P., Javůrková, A., Raudenská, J., & Prikner,
+  O. (2026). Validity and factor structure of the Czech GAD-7 across twenty
+  samples and four independent translations. *Journal of Anxiety Disorders*,
+  120, 103149. https://doi.org/10.1016/j.janxdis.2026.103149
 - Condon, D. M., Chapman, R., Shaunfield, S., Kallen, M. A., Beaumont, J. L.,
   et al. (2020; online 2019). Does recall period matter? Comparing PROMIS®
   physical function with no recall, 24-hr recall, and 7-day recall. *Quality
@@ -955,6 +991,9 @@ quotes and verification level there):
 - Gonzalez, O., & Pelham, W. E. (2021). When does differential item functioning
   matter for screening? *Assessment*, 28(2), 446–456.
   https://doi.org/10.1177/1073191120913618
+- Goretzko, D., & Wetzel, E. (2026). Stop using fixed cutoffs to evaluate
+  latent variable models! *European Journal of Psychological Assessment*,
+  42(2), 77–82. https://doi.org/10.1027/1015-5759/a000943
 - Goretzko, D., Siemund, K., & Sterner, P. (2024). *Educational and
   Psychological Measurement*, 84(1), 123–144.
   https://doi.org/10.1177/00131644231163813
@@ -1057,6 +1096,15 @@ quotes and verification level there):
   Psychopathology Self-Report (HiTOP-SR) in a mixed clinical/community sample.
   *Psychological Assessment*, 38(6–7), 451–465.
   https://doi.org/10.1037/pas0001455
+- Mwangi, P., Nyongesa, M. K., Koot, H. M., Cuijpers, P., Newton, C. R. J.
+  C., & Abubakar, A. (2020). Validation of a Swahili version of the 9-item
+  Patient Health Questionnaire (PHQ-9) among adults living with HIV compared
+  to a community sample from Kilifi, Kenya. *Journal of Affective Disorders
+  Reports*, 1, 100013. https://doi.org/10.1016/j.jadr.2020.100013
+- Ndukwe, R., Scazufca, M., & Van de Ven, P. (2026). Beyond the total score:
+  Factorial validity of the PHQ-9 in high-symptom contexts. *Journal of
+  Affective Disorders Reports*, 25, 101141.
+  https://doi.org/10.1016/j.jadr.2026.101141
 - Neufeld, S. A. S., St Clair, M., Brodbeck, J., Wilkinson, P. O., Goodyer,
   I. M., & Jones, P. B. (2023/2024). *Assessment*, 31(4).
   https://doi.org/10.1177/10731911231182687
