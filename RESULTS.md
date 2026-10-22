@@ -139,6 +139,18 @@ Enriched sample (screened for diagnosed, currently bothersome
 depression/anxiety/ADHD): 310 → 305 (CFA) and 255 (ICC); mean age 41.0.
 Mean retest gap ≈ 9.5 days (GP) and 8.5 days (EN).
 
+Item response distributions (`NB_item_distributions.ipynb`; tables in
+`data/item_distributions/`), supporting the preregistered WLSMV choice:
+every item has four ordered categories, all observed in every sample. GP
+items are floor-heavy and right-skewed (wave 1: median 55% of HiTOP
+responses in the lowest category; 49/83 items with |skew| > 1). Validation
+and EN items are near-symmetric but flat (median skew .23 / .20, excess
+kurtosis ≈ −1.0), so the prereg's "non-normal" premise holds for the
+validation sample as platykurtosis rather than skew. The same HiTOP item
+draws a median ~28 percentage points more lowest-category responses in GP
+than in validation (~29 more than in EN), which is the case for ordinal
+over continuous models in every ladder involving GP (Lubke & Muthén, 2004).
+
 ## Full-scale invariance across samples (3-way)
 
 Baselines in `data/cfa/orig_cfa_res.csv`, generated in
