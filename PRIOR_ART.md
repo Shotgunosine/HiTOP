@@ -855,9 +855,13 @@ quotes and verification level there):
 
 ## 12. Before submission
 
-1. Apply McNeish (2026) dynamic cutoffs and/or Savalei et al. (2023) RMSEA_D
-   to the 20 × 3 conventional-criteria screen, using the scaled difference
-   statistic from `lavTestLRT` (add to `NB_conventional_criteria.ipynb`). This
+1. ~~Apply McNeish (2026) dynamic cutoffs and/or Savalei et al. (2023) RMSEA_D
+   to the 20 × 3 conventional-criteria screen.~~ **Done 2026-10-02**
+   (`NB_calibrated_criteria.ipynb`; RESULTS.md "Calibrated alternatives"
+   section): calibration recovers all 29 delta-level failures and removes
+   the pair-dependence, but flags 3–4 of 8 permutation-passing cells at the
+   5% operating point and mislocalises the level more often than the
+   permutation ladder — the prescription is "calibrate *and* permute". This
    is more pressing now: Maassen et al. point readers to dynamic cutoffs, and
    Lasker (2024) used RMSEA_D to reverse a ΔRMSEA verdict.
 2. *Done 2026-10-01, re-run at submission.* Citing-literature checks were run
