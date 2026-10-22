@@ -1,0 +1,300 @@
+Test-retest reliability and measurement invariance of a subset of the HiTOP internalizing scales with a two-week time window.
+This is an update to the original registration. This update was made on Aug 28, 2023.
+Reason for update:
+
+YouGov fielded the study with 25 participants on August 25th, 2023. The survey has 4 attention checks, two in the symptom rating grids, two in the symptom checklists. 36% of respondents failed at least one check item. None failed the first attention check, 16% failed the second, and 32% failed one of the two list checks. We've added an instruction screen preceding the symptom lists that reads as follows: “On the following pages please select the items that reflect your behavior today. Please pay close attention to the items. On some pages there may be an item that we ask you to select to confirm that you are a true respondent.” In order to filter out participants who fail attention checks earlier, we have added a new attention check on the first page of the symptom rating grids. Participants who fail either the first attention check or the second attention check will not continue filing out the survey. Since we cannot change the uploaded survey, we have uploaded it to github and will reference the commit hash for the updated version. Additionally, we ran preliminary tests of some of our hypotheses in these 25 participants in order to confirm that the data provided by YouGov was sufficient to test the hypotheses. We found that we had underspecified our use of mutual information in testing hypotheses D2-D5. This update clarifies that we will use Scikit-Learn's mutual_info_classif function treating sum scores as continuous features with k=3 for nearest neighbor estimation of mutual information between continuous features and discrete labels. We will change these hypotheses to 2-sided tests. We realized that the Sluggish Cognitive tempo scale is not intended to be added to the the Inattention, Hyperactive, and Impulsive subscales of the the BAARS to calculate an ADHD total score.
+
+Data
+
+Analytic Code
+
+Materials
+
+Papers
+
+Supplements
+
+
+Study Information
+Hypotheses
+I will report the test-retest reliabilities as ICC(2,1) with 95% confidence intervals in each of the following scales for both a general population sample, a sample enriched for individuals with symptoms of depression, anxiety, or ADHD, and combined across the two samples. I am not testing any hypotheses about the reliabilities, just quantifying them.
+Scales:
+	PHQ-8
+	GAD-7
+	BAARS-IV
+	HiTOP Anhedonic Depression*
+	HiTOP Anxious Worry✝
+	HiTOP Appetite Gain*
+	HiTOP Appetite Loss*
+	HiTOP Cognitive Problems*
+	HiTOP Hyposomnia*
+	HiTOP	Indecisiveness*
+	HiTOP Insomnia*
+	HiTOP Panic✝
+        HiTOP Separation Insecurity✝
+        HiTOP Shame/Guilt*
+        HiTOP Situational Phobia✝
+        HiTOP Social Anxiety✝
+        HiTOP Well-being**
+*: Sub-scales I judge to be more associated with DSM-V symptoms of a mood disorder
+✝: Sub-scales I judge to be more associated with DSM-V symptoms of an anxiety disorder
+**: I expect this subscale to be inversely correlated with mood disorders
+
+Since I am changing the time window of assessment of the HiTOP questions (or items, I use the terms interchangeably) from one year to two weeks, it is possible that I may not be measuring the same latent constructs as were originally assessed. While collecting information from the same individuals with both time windows would be one way to investigate this possibility, the length of the survey would be prohibitively long and we do not have sufficient resources to collect separate samples for each subscale. Instead we will assess measurement invariance. Measurement invariance refers to a consistency in the relationship between observed survey responses and underlying latent constructs. We will test this with a series of progressively more constrained confirmatory factor analyses (CFAs). The first level tested will be configural invariance in which we determine if the factor structure is the same across populations. The second level is metric invariance, in which factor loadings are constrained to be equal between groups. The third level is scalar invariance, in which item intercepts are constrained to be equal between groups. If the measures have scalar invariance, then it is valid to assess differences in the mean observed scores on those measures between populations or measure versions; otherwise, you must compare differences in the estimated latent values. The final level is strict invariance in which the residuals are constrained to be equal between groups. If the measures have strict invariance, then the items are performing identically between groups (see Luong and Flake, 2022 for an introduction and tutorial). Strict invariance is frequently considered too high of a standard to meet when comparing measures in different populations, but we will assess it here because it may hold with just a change in the time window.
+
+We are testing measurement invariance in two comparisons:
+1) The HiTOP validation sample against the first time point of our general population sample.
+2) The first time point of our general population sample against the first time point of our enriched sample.
+
+
+Where measurement invariance is related to the comparison of a measure to itself (either in another population or with some modification), it is also important to compare a measure against external sources of information. This external information can be used to confirm that the construct(s) you are claiming to measure agree with other assessments of that construct, which is called convergent validity. It can also be used to determine how specific a measure is for a particular construct in comparison to related but distinct constructs, which is called divergent validity (discussed below). The HiTOP scales are still in development and have not been compared to other well established screening measures of depression or anxiety. We will test some hypotheses to determine if the HiTOP scales have convergent validity with these measures of depression, as well as with self-report of having been bothered by symptoms of a mood or anxiety disorder. 
+
+Hypotheses:
+- The HiTOP Anhedonic Depression subscale will be positively correlated with the PHQ-8.
+- The HiTOP Well-being subscale will be negatively correlated with the PHQ-8.
+- The HiTOP Anxious Worry subscale will be positively correlated with the GAD-7.
+- Higher sum of scores on the HiTOP Appetite Gain and Appetite Loss will be positively correlated with responses to PHQ-8 “Poor appetite or overeating.”
+- The HiTOP Cognitive Problems subscale will be positively correlated with responses to the PHQ-8 item “Trouble concentrating on things, such as school work, reading or watching television.”
+- The HiTOP Insomnia subscale will be positively correlated with responses to the PHQ-8 item “Trouble falling or staying asleep, or sleeping too much.”
+- A higher sum of all HiTOP subscales will be associated with a greater likelihood of being bothered by symptoms of a diagnosed mood or anxiety disorder.
+
+With any symptom measure is it possible that higher scores indicate nonspecific mental health disability. The ability of a measure to distinguish between constructs is called discriminant validity. We will first test the ability of this subset of HiTOP scale to discriminate between Anxiety/Depression vs ADHD. 
+
+Hypotheses:
+- There will be a stronger correlation between the sum of HiTOP scales and the sum of GAD-7 and PHQ-8 scores than with BAARS-IV total score.
+- The sum of HiTOP scales will be a better predictor of being bothered by symptoms of a diagnosed mood or anxiety disorder than of being bothered by symptoms of ADHD.
+- The BAARS-IV total score will be a better predictor of being bothered by symptoms of ADHD than of a diagnosed mood or anxiety disorder.
+
+Finally, we will test the discriminative ability of the subset of HiTOP scales that appear more related to mood disorders and the subset of HiTOP scales more related to anxiety disorders.
+
+Hypotheses:
+- The sum of HiTOP mood disorder scales will be a better predictor of being bothered by symptoms of a diagnosed mood disorder than of being bothered by symptoms of a diagnosed anxiety disorder.
+- The sum of HiTOP anxiety disorder scales will be  a better predictor of being bothered by symptoms of a diagnosed anxiety disorder than of being bothered by symptoms of a diagnosed mood disorder.
+
+Design Plan
+Study type
+Observational Study - Data is collected from study subjects that are not randomly assigned to a treatment. This includes surveys, “natural experiments,” and regression discontinuity designs.
+
+Blinding
+No blinding is involved in this study.
+
+Is there any additional blinding in this study?
+No data
+
+Study design
+We will recruit 500 US adults representative of the US population, and attempt to retest 400 of them within one week. We will recruit 310 US adults with anxiety, depression, and/or ADHD and attempt to retest 250 of them within one week. Test-retest reliability considers both within and between participant variance. Model invariance is a between subjects analysis.
+
+No files selected
+
+Randomization
+No data
+
+Sampling Plan
+Existing Data
+Registration prior to creation of data
+
+Explanation of existing data 
+Updated
+We have not collected any data for this study. We have been provided with subject level data from the HiTOP validation study, described in Watson et al., 2022.
+
+As of August 25th, 2023, we examined data from the first 25 respondents to ensure that the data would be usable for testing our hypotheses.
+
+Data collection procedures 
+Updated
+Data will be collected via online surveys through the YouGov platform. The US adult general population will be fielded using quota frames (a set of demographic breakdowns that are used to collect the sample) built from the 2019 American Community Survey (ACS). This is standard practice for the YouGov team with general population samples, to ensure that they are delivering a representative sample. However, YouGov does not have a frame for US adults with anxiety/depression/ADHD, so they will collect this sample based on census clicks. This just means that when YouGov fields the survey, they will count incomplete, screenout, and complete cases in the quota frame (also 2019 ACS), and will build a weighting scheme on the back end with the qualifying cases who passed the screeners for the sample. It is more of a funnel down approach from the general population frame, as this is a very particular subset of the population that the census does not account for.
+
+The full survey is available on github at https://github.com/Shotgunosine/cogmood_surveys/blob/399c11aa06fc96485f7bbffbd4a7aeadd28da71b/NIMH0007_Questionnaire_8.25.23%20final%20clean.docx. Note that this reference includes the commit hash so that the document is uniquely identified.
+
+Adults are screened for inclusion in the enriched sample based on positive answers to the following yes or no questions:
+Do you have -- or have you had -- a diagnosed, on-going mental health/illness/condition?
+Do you have any diagnosed mental health condition that is uncontrolled (by medication or intervention) and which has a significant impact on your daily life / activities?
+
+And a positive answer to at least one of the following yes or no questions:
+Do you experience depression?
+Do you experience anxiety?
+Do you consider yourself to have attention deficit disorder (ADD)/attention deficit hyperactivity disorder (ADHD)?
+
+We have chosen these screening questions and this wording because they are available on Prolific, where we intend to run a follow-up study using this measure.
+
+Updated
+No files selected
+
+Sample size
+We will collect 500 US adults representative of the US population and attempt to retest 400 of them within one week. We will recruit 310 US adults with anxiety, depression, and/or ADHD and attempt to retest 250 of them within one week. The HiTOP data shared with us includes 496 responses.
+
+
+Sample size rationale
+The total recruitment numbers are based on the money we had available in a previously established contract with YouGov. The breakdown between general population US adults and the enriched sample is based on their estimate of the number of individuals in their pool who will qualify for that sample. A test-retest sample of 300 individuals will give us a 50% probability of obtaining error bars +/- 0.05 assuming the true test-retest reliability is 0.75, which is a reasonable estimate for scales like this. A test-retest sample of 250 individuals will give us an 50% probability of obtaining error bars  +/- 0.055. (Borg et al., 2022 and web calculator at https://wnarifin.github.io/ssc/ssicc.html). 
+
+Stopping rule
+No data
+
+Variables
+Manipulated variables
+While not strictly manipulating variables, we are collecting two new samples in which the time frame of the questions has been changed from 1 year to 2 weeks. The second sample is enriched for individuals with anxiety, depression, and ADHD via screening questions.
+
+No files selected
+
+Measured variables
+The questions we are collected are in the survey below. These include the BAARS-IV, PHQ-8, GAD-7, a selection of HiTOP internalizing item subscales, and additional questions about diagnosis and treatment of anxiety, depression, and attention disorders.
+
+No files selected
+
+Indices 
+Updated
+We will create sum scores for each BAARS-IV and HiTOP subscale, all of the HiTOP scales (other than well-being), as well as for the GAD-7 and PHQ-9.
+The BAARS-IV sum will include the sums of the inattention, hyperactivity, and impulsivity scales. The HiTOP sum will exclude the well-being subscale.
+We will create four binary indicators:
+1) Mood_bothered: Being bothered by symptoms of a diagnosed mood disorder in the previous two weeks.
+	True for participants who respond yes to both of the following questions:
+		- “Have you been diagnosed with a mood disorder by a mental health professional? This includes Depression, Major Depressive Disorder, Bipolar Disorder type I or II, Cyclothymic Disorder, Persistent Depressive Disorder (Dysthymia), and Premenstrual Dysphoric Disorder.” 
+		- “In the past two weeks have you been bothered by symptoms of your mood disorder(s)?”
+	False otherwise
+2) Anxiety_bothered: Being bothered by symptoms of a diagnosed anxiety disorder in the previous two weeks.
+	True for participants who respond yes to both of the following questions:
+		-“Have you been diagnosed with an anxiety disorder by a mental health professional? This includes:
+		Generalized Anxiety Disorder
+		Separation Anxiety Disorder
+		Agoraphobia
+		Specific Phobia
+		Social Anxiety Disorder (Social Phobia)
+		Panic Disorder
+		Panic Attack
+		Selective Mutism”
+		-“In the past two weeks have you been bothered by symptoms of your anxiety disorder?”
+F	alse otherwise
+3) Attention_bothered: Being bothered by symptoms of a diagnosed attention disorder in the previous two weeks.
+	True for participants who respond yes to both of the following questions:
+	-“Have you been diagnosed with attention-deficit/hyperactivity disorder (ADHD) or attention-deficit disorder (ADD)?”
+	-“In the past two weeks have you been bothered by symptoms of your attention disorder(s)?”
+False otherwise
+4) MoodAnxiety_bothered: Being diagnosed by either a diagnosed mood or anxiety disorder in the last two weeks. Calculated as Mood_bothered -or- Anxiety_bothered
+
+We will create two additional sums.
+1) Sum of depression related HiTOP Scales:
+	HiTOP Anhedonic Depression*
+	HiTOP Appetite Gain*
+	HiTOP Appetite Loss*
+	HiTOP Cognitive Problems*
+	HiTOP Hyposomnia*
+	HiTOP	Indecisiveness*
+	HiTOP Insomnia*
+	HiTOP Shame/Guilt*
+2) Sum of anxiety related HiTOP Scales:
+	HiTOP Anxious Worry✝
+	HiTOP Panic✝
+	HiTOP Separation Insecurity✝
+	HiTOP Situational Phobia✝
+	HiTOP Social Anxiety✝
+
+No files selected
+
+Analysis Plan
+Statistical models 
+Updated
+Test-Retest reliability analyses:
+For the test-retest reliability analyses, we will calculate ICC(2,1) values along with confidence intervals for each subscale of the BAARS-IV, and HiTOP, as well as the total scores for these scales and the GAD-7 and PHQ-8 within each of our sub-samples individually. 
+
+Measurement invariance analyses:
+For each HiTOP subscale individually, we will assess configural, metric, scalar, and strict invariance between the HiTOP validation sample and the first assessment of our general population sample. We will use between-group permutations to assess the significance of Chi^2 for configural invariance and delta Chi^2 for other invariances. We will use 1000 permutations. All models will use the WLSMV estimator since the scale items only have 4 response levels and preliminary examination of the HiTOP validation sample indicates non-normal response distributions. We will use the first item of each subscale as the marker item, as it is not obvious which items are more or less likely to vary between populations or by time window. Models will be fit in lavaan (Rosseel 2012) using the semTools package (Jorgensen et al., 2022) via rpy2.
+
+We will assess configural invariance with a multi-group confirmatory factor analysis with a single factor model for each scale. We will consider the results supportive of configural invariance if the permuted Chi^2 test is insignificant with an alpha of 0.05. If the permutation test is significant, we will consider the magnitude of the invariance to be of no concern if the robust CFI and TLI are greater than 0.95 and the robust RMSEA is less than 0.6 (see Kite, Jorgensen, & Chen, 2018 and Jorgensen et al., 2018 for permutation methods, Hu & Bentler, 2009 for thresholds). If these thresholds are violated for a subscale then we will take this as evidence that that subscale’s factor structure differs when asking about a two week time window as opposed to a one year window.
+
+We will assess metric invariance by comparing the configural model to a “metric model” in which loadings are constrained to be equal between groups. Metric invariance will be supported if the permutation test of delta chi^2 between the configural and metric models is insignificant.
+
+We will assess scalar invariance by comparing the metric model to a “scalar model” in which loadings and intercepts are constrained to be equal between groups. Scalar invariance will be supported if the permutation test of delta chi^2 between the metric and scalar models is insignificant.
+
+We will assess strict invariance by comparing the scalar model to a “strict model” in which loadings, intercepts, and residuals are constrained to be equal between groups. Strict invariance will be supported if the permutation test of delta chi^2 between the scalar and strict models is insignificant.
+
+If a subscale fails invariance at any stage prior to strict invariance, we will remove items from the scale in step-wise order according to the permuted maximum modification index to find a core set of scalar invariant items for each subscale. If there are fewer than three items remaining in a subscale, we will consider it impossible to establish an invariant scale for that construct from the questions we started with.
+
+We will follow the same procedure for establishing invariance between each of the HiTOP subscales in our general population sample and our enriched sample. We will also follow these approaches to confirm invariance of the GAD-7, PHQ-8 and each of the BAARS-IV subscales.
+
+For the scales that are at least scalar invariant between the general population sample and enriched sample, we will assess test-retest reliability combining the general population and enriched samples. For the scales for which we have to find a core-invariant set, we will assess the test-retest reliability of the core-invariant set in the combined general population and enriched samples. We will use these invariant scales in our subsequent tests of convergent and divergent validity. For scales in which we cannot establish an invariant core, we will test the relevant hypotheses in just the enriched sample.
+
+Convergent validity analyses:
+We will assess 7 convergent validity hypotheses:
+	C1: The HiTOP Anhedonic Depression subscale will be positively correlated with the PHQ-8.
+	C2: The HiTOP Well-being subscale will be negatively correlated with the PHQ-8.
+	C3: The HiTOP Anxious Worry subscale will be positively correlated with the GAD-7.
+	C4: Higher sum of scores on the HiTOP Appetite Gain and Appetite Loss will be correlated with responses to PHQ-8 “Poor appetite or overeating.”
+	C5: The HiTOP Cognitive Problems subscale will be positively correlated with responses to the PHQ-8 item “Trouble concentrating on things, such as school work, reading or watching television.”
+	C6: The HiTOP Insomnia subscale will be positively correlated with responses to the PHQ-8 item “Trouble falling or staying asleep, or sleeping too much.”
+	C7: A higher sum of all HiTOP subscales will be associated with a greater likelihood of being bothered by symptoms of a diagnosed mood or anxiety disorder.
+
+For C1, C2, and C3 we will perform a Spearman rank correlation test between the HiTOP scale (or invariant core, see above) and the PHQ-8 or GAD-7. Significance will be assessed with an alpha of 0.05.
+
+For C4 through C6 we will perform a Spearman rank correlation test between the HiTOP scale(s) (or invariant cores) and the PHQ-8 item.
+
+For C7, we will perform a logistic regression to test if the sum of all HiTOP scales (or invariant cores) is a significant predictor of the MoodAnxiety_bothered binary indicator described above. 
+
+We will assess 5 divergent validity hypotheses, three of which compare Anxiety/Depression against ADHD:
+     D1: There will be a stronger correlation between the sum of HiTOP scales and the sum of GAD-7 and PHQ-8 scores than with BAARS-IV total score.
+     D2: The sum of HiTOP scales will be a better predictor of being bothered by symptoms of a diagnosed mood or anxiety disorder than of being bothered by symptoms of ADHD.
+     D3: The BAARS-IV total score will be a better predictor of being bothered by symptoms of ADHD than of a diagnosed mood or anxiety disorder.
+With the other two comparing anxiety against depression:
+     D4: The sum of HiTOP mood disorder scales will be a better predictor of being bothered by symptoms of a diagnosed mood disorder than of being bothered by symptoms of a diagnosed anxiety disorder.
+     D5: The sum of HiTOP anxiety disorder scales will be  a better predictor of being bothered by symptoms of a diagnosed anxiety disorder than of being bothered by symptoms of a diagnosed mood disorder.
+
+In D1 and D2, we will exclude the well-being subscale from the sum scores. In all of these hypotheses, we will use the sum of items in the invariant cores for subscales where scalar invariance between the general population and enriched subsample was not supported.
+
+We will assess D1 by calculating the difference in Spearman rank correlation between the HiTOP sum and the GAD-7/PHQ-8 sum, and the Spearman rank correlation between the HiTOP sum and the BAARS-IV sum, and comparing this to a null distribution in which BAARS-IV scores and GAD-7/PHQ-8 sums are permuted. We will use 1000 permutations in our null distribution, and all sums will be z-scored prior to conducting this analysis.
+	
+We will assess D2 by comparing the mutual information (MI) of the HiTOP sum with the MoodAnxiety_bothered binary indicator against the MI of the HiTOP sum with the Attention_bothered indicator. For clarity the null hypothesis we are testing is:
+MI(HiTOP, MoodAnxiety_bothered) - MI(HiTOP, Attention_bothered) = 0
+We will calculate this difference in the MI and assess its significance with a permutation test in which we shuffle binary indicator values between individuals. Mutual information will be calculated with Scikit-Learn's mutual_info_classif function treating scale sum scores as continuous features with k=3 for nearest neighbor estimation of mutual information between continuous features and discrete labels.
+
+D3 will be assessed similarly to D2, except that we will use the BAARS-IV score instead of the HiTOP score.
+
+For D4 we will compare the MI of the HiTOP Depression sum with Mood_bothered to the MI of the HiTOP Depression sum with Anxiety_bothered as in D2.
+
+For D5 we will compare the MI of the HiTOP Anxiety sum with Anxiety_bothered to the MI of the HiTOP Anxiety sum with Mood_bothered as in D2.
+
+No files selected
+
+Transformations
+No data
+
+Inference criteria 
+Updated
+We will use an alpha of 0.05. We are performing many tests in this analysis but, as they are largely independent, each test will only influence the conclusions regarding the subscale it is related to. Since these are independent assessments, we will not correct for multiple comparisons for tests across subscales.
+
+Hypotheses:
+- The HiTOP Anhedonic Depression subscale will be positively correlated with the PHQ-8. 2-sided)
+- The HiTOP Well-being subscale will be negatively correlated with the PHQ-8. (2-sided)
+- The HiTOP Anxious Worry subscale will be positively correlated with the GAD-7. (2-sided)
+- Higher sum of scores on the HiTOP Appetite Gain and Appetite Loss will be positively correlated with responses to PHQ-8 “Poor appetite or overeating.” (2-sided)
+- The HiTOP Cognitive Problems subscale will be positively correlated with responses to the PHQ-8 item “Trouble concentrating on things, such as school work, reading or watching television.” (2-sided)
+- The HiTOP Insomnia subscale will be positively correlated with responses to the PHQ-8 item “Trouble falling or staying asleep, or sleeping too much.” (2-sided)
+- A higher sum of all HiTOP subscales will be associated with a greater likelihood of being bothered by symptoms of a diagnosed mood or anxiety disorder.(2-sided)
+
+- There will be a stronger correlation between the sum of HiTOP scales and the sum of GAD-7 and PHQ-8 scores than with BAARS-IV total score. (2-sided)
+- The sum of HiTOP scales will be a better predictor of being bothered by symptoms of a diagnosed mood or anxiety disorder than of being bothered by symptoms of ADHD. (2-sided)
+- The BAARS-IV total score will be a better predictor of being bothered by symptoms of ADHD than of a diagnosed mood or anxiety disorder. (2-sided)
+
+- The sum of HiTOP mood disorder scales will be a better predictor of being bothered by symptoms of a diagnosed mood disorder than of being bothered by symptoms of a diagnosed anxiety disorder. (2-sided)
+- The sum of HiTOP anxiety disorder scales will be  a better predictor of being bothered by symptoms of a diagnosed anxiety disorder than of being bothered by symptoms of a diagnosed mood disorder. (2-sided)
+
+
+Data exclusion 
+Updated
+Subjects who fail one of the first two attention checks will not complete the survey and will not counts towards our recruitment totals. In our primary analysis we will include participants who pass the first three attention checks. In order to determine if the results of our hypothesis tests are sensitive to our exclusion criteria, we will repeat those tests both with the stricter criteria of requiring participants to pass all 5 attention checks, and with the less stringent criteria of allowing failure on the third attention check if there is not evidence of "straight-lining".
+
+Missing data
+If participants respond “Prefer not to answer” to any of the questions required for the binary indicators, they will be excluded from analyses related to those binary indicators. 
+
+Exploratory analysis
+We will conduct exploratory analyses to determine how responses to questions focused on the previous two weeks correspond to endorsement of items on a checklist of symptoms experienced that day.
+
+
+Other
+Other
+Barkley, Russell A. (2011). Barkley Adult ADHD Rating Scale-IV (BAARS-IV). Guilford Press.
+Borg, D. N., Bach, A. J. E., O’Brien, J. L., & Sainani, K. L. (2022). Calculating sample size for reliability studies. PM&R, 14(8), 1018–1025. https://doi.org/10.1002/pmrj.12850
+Hu, L., & Bentler, P. M. (1999). Cutoff criteria for fit indexes in covariance structure analysis: Conventional criteria versus new alternatives. Structural Equation Modeling: A Multidisciplinary Journal, 6(1), 1–55. https://doi.org/10.1080/10705519909540118
+Jorgensen, T. D., Pornprasertmanit, S., Schoemann, A. M., & Rosseel, Y. (2022). semTools: Useful tools for structural equation modeling. https://CRAN.R-project.org/package=semTools
+Kroenke, K., Strine, T. W., Spitzer, R. L., Williams, J. B. W., Berry, J. T., & Mokdad, A. H. (2009). The PHQ-8 as a measure of current depression in the general population. Journal of Affective Disorders, 114(1), 163–173. https://doi.org/10.1016/j.jad.2008.06.026
+Luong, R., & Flake, J. K. (2022). Measurement invariance testing using confirmatory factor analysis and alignment optimization: A tutorial for transparent analysis planning and reporting. Psychological Methods, No Pagination Specified-No Pagination Specified. https://doi.org/10.1037/met0000441
+Rosseel, Y. (2012). lavaan: An R Package for Structural Equation Modeling. Journal of Statistical Software, 48(2), 1–36. https://doi.org/10.18637/jss.v048.i02
+Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A Brief Measure for Assessing Generalized Anxiety Disorder: The GAD-7. Archives of Internal Medicine, 166(10), 1092–1097. https://doi.org/10.1001/archinte.166.10.1092
+Watson, D., Forbes, M. K., Levin-Aspenson, H. F., Ruggero, C. J., Kotelnikova, Y., Khoo, S., Bagby, R. M., Sunderland, M., Patalay, P., & Kotov, R. (2022). The Development of Preliminary HiTOP Internalizing Spectrum Scales. Assessment, 29(1), 17–33. https://doi.org/10.1177/10731911211003976
