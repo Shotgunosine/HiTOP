@@ -18,10 +18,22 @@ preregistered methods are listed explicitly in
    survives every comparison. Meanwhile GP wave 1 vs wave 2 and EN wave 1
    vs wave 2 pass through strict invariance for nearly everything
    (`NB_2_cfa_as_reg.ipynb`, `NB_2_cfa_as_reg_other_*.ipynb`).
-2. **Conventional ΔCFI/ΔRMSEA criteria miss all of it.** Every scale that
-   fails the permutation tests — including the PHQ-8 across GP–EN — passes
-   the conventional |ΔCFI| ≤ .01 / ΔRMSEA ≤ .015 screen at every level
-   (`NB_phq8_gp_en_followup.ipynb`).
+2. **Conventional ΔCFI/ΔRMSEA criteria see half of it, mislocalized —
+   and ΔCFI alone sees almost none of it.** Across all scales and pairs
+   (`NB_conventional_criteria.ipynb`), the joint
+   ΔCFI ≥ −.01 / ΔRMSEA ≤ .015 rules detect 21 of the 40
+   permutation-failing scale × pair cells (9/13 val_gp, 8/14 val_en,
+   4/13 gp_en — plus one gp_en flag on a scale whose permutation ladder
+   passes strict), frequently at the wrong tier (val_gp hyposomnia and
+   panic flag at strict where the permutation ladder fails configural).
+   ΔCFI alone detects 7 of 40. All 11 configural failures — including
+   the PHQ-8 between GP and EN — are invisible to delta criteria by
+   construction. Calibrated alternatives (RMSEA_D; McNeish-style dynamic
+   cutoffs) recover all 29 delta-level failures and erase the
+   pair-dependence, but at the 5% operating point flag 3–4 of the 8
+   permutation-passing cells and mislocalise the level more often than
+   the permutation ladder. See the conventional-criteria and calibrated-
+   criteria sections below.
 3. **Stepwise item removal restores invariance.** Between GP and EN, all
    14 HiTOP subscales reach a scalar-invariant core (5 already at full
    scale). Across all three samples simultaneously, 10 of 14 get a core
@@ -49,6 +61,17 @@ preregistered methods are listed explicitly in
    and the stricter triply invariant cores), invariant cores lose at most
    .07 ICC relative to their full scales (median loss ≈ .02)
    (`NB_3_ICC.ipynb`).
+
+8. **Detection and consequence are different questions, and no decision
+   rule bridges them.** Across all 48 scale × pair cells, consequential
+   non-invariance is rare (median gross DIF bias 2.6% of range; 15/48
+   cells by a generous composite). Fit-index *magnitudes* (ΔCFI, RMSEA_D)
+   track DIF effect sizes moderately (ρ ≈ .55–.62) while permutation
+   p-values do not (ρ ≈ .2–.3); yet as binary screens the calibrated
+   rules and the permutation ladder all flag ~40 of 48 cells (precision
+   for consequence ≈ .35), and the conventional cutoffs do worse than
+   chance (κ = −.25), missing 11 of 15 consequential cells
+   (`NB_practical_significance.ipynb`).
 
 ## Confirmatory vs exploratory
 
@@ -226,17 +249,38 @@ The exhaustive search (val_gp-first early abandon, calibrated parametric
 delta screen α = .005, stepwise configural-certificate size caps; driven by
 `NB_2_cfa_exploratory.ipynb` / `notebooks/run_exhaustive_scale.py`,
 progress pickles in `data/cfa/`) targets scalar invariance across all
-three pairs. Status: complete for 11 scales, incomplete for
-anhedonic_depression; social_anxiety and well_being not yet searched
-(Biowulf-ready; see `HPC.md`).
+three pairs. Status: **complete for all 14 scales** (social_anxiety and
+well_being ran on Biowulf per `HPC.md`, pickles copied home 2026-08;
+anhedonic_depression completed locally 2026-09-28 after the
+degenerate-fit guard — commit b120880 — unblocked its final size-3 tier,
+where exactly one combination was refuted as `degenerate`).
 
-- **Any triply scalar-invariant subset exists** for only 4 scales:
+- **Any triply scalar-invariant subset exists** for 6 scales:
   insomnia (3 items), panic (four 3-item subsets),
   separation_insecurity (**7 items** — one more than the stepwise core
-  retained), situational_phobia (3 items).
-- **Proven none exists** (all ≥3-item subsets refuted): anxious_worry,
+  retained), situational_phobia (3 items), social_anxiety (one 4-item
+  subset: {hitop114, hitop117, hitop129, hitop204}), well_being (two
+  3-item subsets: {hitop54, hitop244, hitop250} and
+  {hitop106, hitop244, hitop250}).
+- **Proven none exists** (all ≥3-item subsets refuted):
+  anhedonic_depression (967 combinations tested), anxious_worry,
   appetite_gain, appetite_loss, cognitive_problems, hyposomnia,
   indecisiveness, shame_guilt.
+- The social_anxiety result sharpens the SR contrast below: the full
+  scale and the SR's 5-item composition fail configural in every pair,
+  yet a 4-item triply scalar-invariant subset exists — it shares only
+  hitop114 and hitop129 with the SR selection.
+- **Other scales (gp_en-only searches; completed 2026-09-29,
+  `data/cfa/other_scales_exhaustive.pkl`)**: PHQ-8's unique 5-item
+  scalar subset {phq_1, 2, 4, 6, 8} is independently reproduced (all
+  7- and 6-item subsets refuted), confirming the stepwise metric
+  fallback {phq_1, 3, 4, 6, 7} is not scalar-capable; inattention has
+  eight 6-item scalar subsets (all 8- and 7-item subsets refuted; the
+  stepwise core is among the eight); SCT has exactly two (the stepwise
+  core {sct_1, 3, 4, 5, 6, 8} and {sct_1, 3, 4, 5, 7, 9}). GAD-7,
+  hyperactivity, and impulsivity pass strict at full scale and need no
+  search. Cores remain stepwise-only downstream; the annotated
+  exhaustive choices are documentation.
 - The GP–EN-only exhaustive PHQ-8 search
   (`NB_phq8_gp_en_followup.ipynb`) found exactly one scalar-invariant
   5-item core: {phq_1, phq_2, phq_4, phq_6, phq_8}. This is an
@@ -391,9 +435,11 @@ factor is undefined (read the conflation range instead). Generated in
 
 From `NB_phq8_gp_en_followup.ipynb` (`data/cfa_phq8_followup/`):
 
-- **Conventional criteria see nothing.** Under the laxer ΔCFI ≤ .01 /
-  ΔRMSEA ≤ .015 screen, every PHQ/GAD/BAARS scale — including the three
-  permutation-test failures — passes every level between GP and EN.
+- **Conventional delta criteria see nothing for these instruments.**
+  Under the ΔCFI ≥ −.01 / ΔRMSEA ≤ .015 screen, every PHQ/GAD/BAARS
+  scale — including the three permutation-test failures — passes every
+  delta level between GP and EN (their failures are configural, where
+  delta criteria do not apply; see the full-screen section below).
 - **The failure is a dimensionality asymmetry.** Enriched-group EFA splits
   the PHQ-8 into somatic and affective factors (replicated in the wave
   data; see the EFA section above).
@@ -402,7 +448,219 @@ From `NB_phq8_gp_en_followup.ipynb` (`data/cfa_phq8_followup/`):
   effects cancel to a negligible net sum bias.
 - **An exhaustively verified 5-item scalar core exists**:
   {phq_1, phq_2, phq_4, phq_6, phq_8} — the only scalar-invariant PHQ
-  subset of any size between GP and EN at 1000 permutations.
+  subset of any size between GP and EN at 1000 permutations
+  (independently reproduced by the other-scales exhaustive search in
+  `NB_2_cfa_exploratory.ipynb`, 2026-09-29, which exhaustively refuted
+  all 7- and 6-item subsets).
+
+## Conventional ΔCFI/ΔRMSEA screen, all scales × all pairs (exploratory)
+
+`NB_conventional_criteria.ipynb` runs the conventional-criteria screen
+on every scale × pair: the 14 HiTOP scales on val_gp, val_en, and
+gp_en, plus PHQ-8/GAD-7/BAARS on gp_en (the validation sample lacks
+those instruments). Scaled CFI/RMSEA per Wu–Estabrook level,
+adjacent-level ΔCFI ≥ −.010 (Cheung & Rensvold, 2002) and
+ΔRMSEA ≤ .015 (Chen, 2007). Table:
+`data/cfa_conventional_criteria/laxer_criteria_screen.csv` (supersedes
+the earlier gp_en-only screen in `data/cfa_phq8_followup/`). Reference
+comparison: the permutation ladders, under which 40 scale × pair cells
+fail somewhere (13 val_gp, 14 val_en, 13 gp_en).
+
+- **Joint ΔCFI/ΔRMSEA detects 21 of the 40 failing cells** — but the
+  sensitivity is pair-dependent: 9/13 on val_gp and 8/14 on val_en
+  (the time-window comparisons, where violations are large), vs 4/13
+  on gp_en (the population-strata comparison), where the criteria also
+  flag appetite_loss (ΔRMSEA +.018 at thresholds), a scale the
+  permutation ladder passes through strict.
+- **When the criteria do flag, they often mislocalize the level.**
+  On val_gp, hyposomnia and panic first flag at *strict* where the
+  permutation ladder fails *configural* — a practitioner would conclude
+  the factor structure is common and only residuals differ, when the
+  structure itself differs; anxious worry and well-being flag one tier
+  late. Exact-tier agreement occurs in roughly half the 21 detections.
+- **ΔCFI alone — the criterion most applied papers rely on — detects
+  7 of 40** (val_gp: hyposomnia, panic, situational_phobia,
+  well_being; val_en: hyposomnia, situational_phobia; gp_en:
+  situational_phobia, −.0121 at scalar).
+- **On gp_en the ΔRMSEA flags are mechanical artifacts of small
+  scales**: the configural (or thresholds) model of a 3–5-item scale is
+  saturated or nearly so, RMSEA starts at an artificial floor of ~0,
+  and the next tier's ordinary sampling noise reads as a ΔRMSEA
+  excursion — the appetite_loss flag (χ²(3) = 3.38, p ≈ .34) and
+  appetite_gain's metric flag (χ²(11) = 13.21, p ≈ .28) carry no χ²
+  evidence at all. On the val pairs, by contrast, ΔRMSEA flags land on
+  large scales with real signal (anxious worry: χ²(47) = 230). The
+  cutoffs are therefore not merely insensitive but **uncalibrated,
+  erring in both directions with model size and violation size**
+  (cf. Jorgensen et al., 2018, on inconsistent Type I error).
+- **All 11 configural failures (5 val_gp, 2 val_en, 4 gp_en — including
+  the PHQ-8) are invisible to delta criteria by construction** — there
+  is no lower level to difference against. At the configural level
+  itself the verdict depends entirely on which absolute-fit rule a
+  practitioner applies: the gp_en four all pass scaled CFI ≥ .95 (SCT
+  marginal, .9496) while all fail scaled RMSEA ≤ .06 (.09–.15).
+- Provenance note: an earlier gp_en-only version of this screen lives in
+  `data/cfa_phq8_followup/laxer_criteria_screen.csv`
+  (`NB_phq8_gp_en_followup.ipynb`); this all-pairs table reproduces its
+  gp_en rows exactly.
+
+## Calibrated alternatives to the fixed cutoffs: RMSEA_D and dynamic (DMI) cutoffs (exploratory)
+
+`NB_calibrated_criteria.ipynb` re-judges the same 48 scale × pair cells
+as the conventional screen with two calibrated alternatives, plus the
+parametric scaled-Δχ² likelihood-ratio test as a reference:
+
+- **RMSEA_D** — the RMSEA of the chi-square *difference* test rather
+  than the difference of two RMSEAs (Savalei, Brace & Fouladi, 2023),
+  in its multiple-group form √[G(ΔT − Δdf)/(Δdf(N − G))] (Beribisky &
+  Hancock, 2024), computed from the scaled Δχ² of `lavTestLRT` and
+  screened at the conventional RMSEA benchmarks .05 and .08 (no RMSEA_D
+  cutoff is established in the literature). lavaan's own `lavTestLRT`
+  RMSEA column applies the same formula to the *unscaled* Δχ² and is
+  recorded alongside.
+- **Dynamic measurement-invariance cutoffs** (McNeish, 2026): for each
+  ladder step, 500 datasets are simulated from the fitted *constrained*
+  model of that step (loadings, residual variances, factor means and
+  variances, thresholds; observed group sizes), both models are refit to
+  each replicate, and the 5th percentile of the null ΔCFI and the 95th
+  percentile of the null ΔRMSEA (also 1st/99th) become the cutoffs.
+  McNeish defines the method for continuous ML indicators; here it is
+  extended to the ordinal WLSMV ladders by simulating latent responses
+  and categorising at the fitted thresholds (R function `dmi_null`,
+  parallelised; all 500 replicates converged in every transition but one,
+  497/500).
+
+Tables: `data/cfa_calibrated_criteria/calibrated_screen.csv` (192
+transitions), `summary_vs_permutation.csv`, `verdicts_by_method.csv`;
+null draws in `dmi_null_draws.pkl`. Reference: the permutation ladders,
+under which 29 cells fail at a delta level, 11 fail at configural (which
+no delta-based rule can see directly), and 8 pass strict.
+
+| rule | detects (of 29 delta-level failures) | exact level | configural-failing scales flagged at some level (of 11) | flags on the 8 permutation-passing cells |
+|---|---|---|---|---|
+| conventional ΔCFI ≥ −.01 / ΔRMSEA ≤ .015 | 19 | 12 | 2 | 1 |
+| scaled Δχ² LRT, p < .05 | 29 | 29 | 10 | 4 |
+| RMSEA_D > .05 | 29 | 24 | 10 | 4 |
+| RMSEA_D > .08 | 26 | 15 | 7 | 0 |
+| DMI 5% (ΔCFI or ΔRMSEA) | 29 | 20 | 11 | 3 |
+| DMI 5%, ΔCFI only | 29 | 21 | 11 | 3 |
+| DMI 5%, ΔRMSEA only | 15 | 9 | 1 | 0 |
+| DMI 1% | 27 | 19 | 7 | 0 |
+
+- **Calibration restores the sensitivity the fixed cutoffs threw away.**
+  The fit indices carried the information all along: RMSEA_D (> .05) and
+  DMI (5%) detect all 29 delta-level failures that the conventional rules
+  detect 19 of, and DMI flags every one of the 11 configural-failing
+  scales at some later step (conventional: 2). The **pair-dependence
+  disappears**: by pair, conventional detection is 7/8 (val_gp), 8/12
+  (val_en), 4/9 (gp_en) against 8/8, 12/12, 9/9 for RMSEA_D(.05), DMI(5%)
+  and the LRT alike — the population-strata insensitivity was a property
+  of the cutoffs, not of the data.
+- **The small-scale ΔRMSEA artifacts vanish.** The appetite_loss gp_en
+  conventional flag (observed ΔRMSEA +.018) passes every calibrated
+  rule; its DMI null 95th percentile for that saturated-baseline step is
+  +.066.
+- **But calibrated delta criteria are not a substitute for the
+  calibrated test.** At the 5% operating point RMSEA_D(.05) and the LRT
+  flag 4 of the 8 permutation-passing cells (GAD-7, hyperactivity and
+  separation insecurity on gp_en, insomnia on val_gp — all at the strict
+  step), and DMI(5%) flags 3 (GAD-7 and separation insecurity at
+  thresholds, insomnia at strict). Exact-level agreement with the
+  permutation ladder is 20/29 for DMI and 24/29 for RMSEA_D — DMI tends
+  to flag at *thresholds* where the permutation ladder localises the
+  failure to metric or scalar. The stricter settings (RMSEA_D > .08,
+  DMI 1%) remove the spurious flags at the cost of 2–3 misses and
+  poorer localisation. The parametric LRT is the only rule with 29/29
+  exact localisation but carries the same 4/8 flags on passing cells —
+  the Type I behaviour of the scaled difference test at the
+  Wu–Estabrook scalar/strict steps (where constraints are encoded by
+  fixing parameters) that motivated the permutation null in the first
+  place.
+- **DMI's power is entirely ΔCFI.** With tailored cutoffs ΔCFI alone
+  detects 29/29; ΔRMSEA alone detects 15/29 even when calibrated,
+  consistent with the structural critique of ΔRMSEA (Savalei et al.,
+  2023; Beribisky & Hancock, 2024).
+- Prescription that follows: fixed ΔAFI cutoffs discard information
+  (uncalibrated in both directions); model-tailored cutoffs recover it;
+  calibrated error control and correct localisation of the failing level
+  still require a permutation (or exact) test.
+
+## Decision rules vs practical significance (exploratory)
+
+`NB_practical_significance.ipynb` asks a different question of the same
+48 scale × pair cells: not "which rule agrees with the permutation
+ladder?" but "which rule flags the cells where non-invariance actually
+distorts scores?" The conventional ΔCFI cutoff was proposed as a
+practical-significance screen (Cheung & Rensvold, 2002), so this is the
+test it should be held to. Consequences are quantified for *every* cell
+(not only the permutation failures, as in the effect-size section) with
+the metric-model DIF decomposition — gross and net DIF-induced sum-score
+bias as % of scale range, whether the net-bias 95% CI excludes zero, and
+the largest item dMACS — plus the ωH-based criterion-correlation
+attenuation for configural-failing scales. Tables:
+`data/practical_significance/{dif_all_cells,cells_effects_and_rules,
+spearman_severity_vs_effect,criteria_vs_practical}.csv`.
+
+**Consequential non-invariance is rare.** Across the 48 cells the median
+gross bias is 2.6% of range (max 5.2%), the median largest-item dMACS is
+.17 (max .49), one cell has a net-bias CI excluding zero (situational
+phobia, val_gp), two exceed 5% gross bias, and 12 (the configural
+failures) have attenuation ≤ .90. A generous composite ("any": dMACS ≥
+.40, or gross ≥ 5%, or net CI excludes zero, or attenuation ≤ .90) marks
+15 of 48 cells.
+
+**Fit-index magnitudes track consequence; p-values do not.** Spearman ρ
+between each rule's continuous severity (its most extreme value across
+the ladder) and the consequence measures:
+
+| severity | gross bias % | max dMACS | abs net bias % |
+|---|---|---|---|
+| conventional: −min ΔCFI | .59 | .60 | .39 |
+| conventional: max ΔRMSEA | .15 | −.05 | .30 |
+| RMSEA_D: max | .60 | .53 | .38 |
+| DMI: ΔCFI margin below null | .56 | .62 | .40 |
+| DMI: ΔRMSEA margin | .25 | .13 | .36 |
+| scaled-Δχ² LRT: −log10 min p | .54 | .61 | .32 |
+| permutation: −log10 min p | .21 | .27 | .26 |
+
+ΔCFI as a *continuous* index is as good a proxy for DIF magnitude as
+RMSEA_D (ρ ≈ .55–.62) — Cheung & Rensvold's intuition was sound — while
+ΔRMSEA in any form barely tracks it, and the permutation p-value, which
+measures evidence against exact invariance rather than its size, tracks
+it least (ρ ≈ .2–.3).
+
+**But as binary screens, no rule — including the permutation ladder —
+has useful precision for consequence, and the conventional rule is the
+worst of them.** Against the composite definition (15 consequential of
+48): conventional precision .18, recall .27, κ = −.25 (below chance; it
+misses 11 of 15 consequential cells, including every dimensionality
+failure — recall .08 against the attenuation criterion — while flagging
+the small-df artifacts); the sensitive rules flag 40–43 of 48 cells and so
+reach recall .93–1.00 at precision ≈ .33–.35 (permutation .35/.93,
+DMI 5% .35/1.00, RMSEA_D > .05 .33/.93); the mid-sensitivity RMSEA_D >
+.08 is the best-calibrated binary rule against moderate-effect
+definitions (κ = .44 for gross ≥ 2.5%, .38 for dMACS ≥ .20) but drops to
+.30/.67 on the composite. Against the strict definitions (dMACS ≥ .40,
+gross ≥ 5%, net CI) every rule's precision is ≤ .09 — the conventional
+rule's nominal edge there is only that it flags fewer cells (κ ≤ .10).
+
+**Reading.** (1) The paper's central claim is now quantitative: rules
+that test exact invariance — calibrated or not — flag roughly three
+times as many cells as have any detectable consequence for scores, so
+detection must be paired with effect sizes, not read as impact. (2) The
+hypothesis that fixed ΔCFI/ΔRMSEA cutoffs are "really" crude
+effect-size screens is refuted at the decision level: the −.01 cutoff sits
+where it misses most consequential cells yet still fires on artifacts,
+even though the ΔCFI index itself tracks consequence. (3) The resulting
+prescription has three parts — a calibrated test (permutation) for
+detection and level, continuous DIF effect sizes (dMACS, net bias) for
+consequence, and fit-index magnitudes at most as a rough proxy, never as
+fixed cutoffs. Caveats: the DIF measures capture threshold/intercept DIF
+on sums and (via attenuation) configural failures, so loading-only
+(metric) violations are inconsequential by construction here; the
+consequence definitions are thresholds on continuous quantities with
+small base rates, so precision estimates are coarse; and the 48 cells
+share scales across pairs and are not independent.
 
 ## HiTOP-SR item crosswalk (exploratory)
 
@@ -448,6 +706,106 @@ here.
   weeks), so the fielded data speak directly to the SR item sets under a
   2-week window.
 
+## HiTOP-SR-composition subsets: invariance and ICC (exploratory)
+
+For every SR (sub)scale with >= 3 fielded items, the SR item composition
+was scored from the fielded data and run through the same
+1000-permutation Wu-Estabrook ladders (three pairs, WLSMV, strict max
+level) and ICC(2,1) machinery as the main analysis. Script:
+`notebooks/run_sr_subsets.py` (rehearsed at 50 permutations in
+`data/rehearsal_sr_subsets/` first); results:
+`data/cfa_sr_subsets/sr_cfa_res.csv` and
+`data/cfa_sr_subsets/icc_sr_subsets.csv`. Rewritten SR items are proxied
+by their fielded ancestors (hitop124, hitop220; sr_insomnia_verbatim
+instead drops the rewritten item); SR Appetite Loss is item-identical to
+the fielded appetite_loss scale and is not rerun. Not runnable
+(< 3 fielded items): Cognitive Problems, Manic Energy, and the three
+Distress-Dysphoria mood subscales.
+
+First failing level per subset x pair (same convention as the main
+table):
+
+| SR subset (items) | V_GP | V_EN | GP_EN |
+|---|---|---|---|
+| sr_anxious_worry (3) | scalar | scalar | scalar |
+| sr_situational_phobia (4) | scalar | scalar | scalar |
+| sr_insomnia_verbatim (3) | scalar | configural (non-convergent) | configural (non-convergent) |
+| sr_social_anxiety (5, 1 proxy) | configural | configural | configural |
+| sr_shame_guilt (3, 1 proxy) | **passes strict** | **passes strict** | scalar |
+| sr_well_being_partial (4 of 5) | metric | metric | metric |
+| sr_panic_partial (3 of 5) | metric | scalar | **passes strict** |
+
+Notable cells:
+
+- **sr_shame_guilt passes strict invariance in both time-window
+  comparisons** (V_GP p = .42, V_EN p = .87) — the SR's 3-item
+  Shame/Guilt composition survives the 1-year-to-2-week change intact —
+  but fails scalar between GP and EN (p = .031).
+- **sr_insomnia_verbatim {hitop160, hitop254, hitop261} does not even
+  converge at configural for V_EN or GP_EN**, whereas the stepwise core
+  {160, 254, 268} was triply scalar-invariant: the item the SR retained
+  verbatim (261, early waking) is the one the stepwise search removed,
+  and the item the SR rewrote (268, sleep-onset) is the one that made
+  the fielded core work.
+- sr_social_anxiety fails configural everywhere (permutation p = .001 to
+  .028 with robust RMSEA .18-.22), mirroring the full fielded scale —
+  the SR's 5-item selection does not repair the structure, although a
+  repair exists: the exhaustive search (above) found a triply
+  scalar-invariant 4-item subset sharing only two items with the SR
+  selection.
+- The scalar wall dominates otherwise: sr_anxious_worry and
+  sr_situational_phobia are metric-invariant in every pair but fail
+  scalar in every pair, so under a 2-week window these SR compositions
+  support correlational/reliability use but not observed-mean
+  comparisons across these populations.
+- sr_panic_partial (the 3 fielded of 5 SR panic items) passes strict
+  between GP and EN, like the full fielded panic scale.
+
+ICC(2,1), combined GP+EN recontact sample (n = 653; per-sample values in
+the CSV): sr_social_anxiety .87, sr_anxious_worry .86, sr_shame_guilt
+.85, sr_well_being_partial .84, sr_panic_partial .82,
+sr_insomnia_verbatim .81, sr_situational_phobia .79 — all
+good-to-excellent and closely tracking the parent full scales
+(.77-.90).
+
+### Practical impact of the SR-subset violations
+
+The main analysis's effect-size suite applied to all 18 SR-subset
+violations (`notebooks/run_sr_effect_sizes.py`; tables
+`data/cfa_sr_subsets/sr_dif_{per_item,summary}.csv`,
+`sr_efa_summary.csv`, `sr_dimensionality.csv`). All 18 metric models
+converge — including the two insomnia cells whose configural models do
+not (their DIF numbers, and those of the other configural-failing
+cells, are order-of-magnitude approximations per the module caveat).
+
+- **Item DIF is real but cancels in the sums, replicating the
+  full-scale story.** 34 of 66 item signed-bias CIs exclude zero
+  (a higher rate than the full scales' 109/328 — short subsets dilute
+  less) yet only **1 of 18 net-bias CIs excludes zero**:
+  sr_situational_phobia val_gp, net −0.35 points ≈ 2.9% of its 12-point
+  range — the same scale × pair that was the sole exclusion among the
+  49 full-scale violations. Gross |bias| never exceeds 6.5% of range.
+- **Real severity gaps dwarf the measurement bias.** E.g.
+  sr_anxious_worry gp_en: real latent gap 3.28 points vs net bias
+  −0.01; sr_social_anxiety gp_en: 3.77 vs +0.10. Observed SR-subset sum
+  differences between these groups are essentially all severity, not
+  DIF.
+- **Largest single-item effects**: hitop225 ("afraid of the dark"),
+  dMACS .53 val_gp — the biggest DIF item in the SR subsets, and the
+  main driver of the one significant net bias; hitop124 (the rewritten
+  "watched/center of attention" proxy) dMACS .34 val_en.
+- **Dimensionality (configural failures).** The 3-item insomnia cells
+  are structurally excluded from the 2-factor check. sr_social_anxiety
+  splits into an interaction-shyness factor (hitop1, hitop17) vs a
+  being-observed/performance factor (hitop124, hitop129; hitop114
+  cross-loads): validation φ = .65, ωH = .72 (attenuation ×.85,
+  required-n inflation 1.40×); enriched φ = .74, ωH = .77 (×.88,
+  1.30×); the genpop 2-factor EFA does not converge (the resists-even-
+  2-factor worst case, as in the main analysis). Practical reading: the
+  SR Social Anxiety sum under a 2-week window still mostly measures one
+  thing (corr(sum, F1) ≈ corr(sum, F2) ≈ .85-.90), at a ~1.3-1.4×
+  sample-size cost for general-factor criterion correlations.
+
 ## Provenance and pending items
 
 - `NB_5_compare_to_archived.ipynb` is the pre-measEq regression harness;
@@ -461,8 +819,13 @@ here.
   a pair-specific core (10 scalar-level — including insomnia's 3-item
   core {160, 254, 268}, identical to the 3-way core — 2 metric;
   cognitive_problems and indecisiveness none).
-- Not yet run: the gp_val two-way stepwise notebook
-  (`NB_2_cfa_as_reg_gp_val.ipynb` — prepared, output dir empty); the
-  anhedonic_depression 3-way exhaustive search (incomplete) and the
-  social_anxiety / well_being exhaustive searches (queued for HPC, see
-  `HPC.md`).
+- The gp_val two-way run (`NB_2_cfa_as_reg_gp_val.ipynb`): baseline
+  ladders exist (`data/cfa_gp_val/orig_cfa_res.csv`, 2026-08-20,
+  consistent with the 3-way V_GP rows) but the stepwise metric/scalar
+  sections have not been run — pending only if a fourth pairwise core
+  set is wanted.
+- All exhaustive searches (14 HiTOP 3-way + the 3 gp_en other-scale
+  failures) are complete and consolidated: `NB_2_cfa_exploratory.ipynb`
+  rerun 2026-09-29 with refreshed review notes, producing
+  `data/cfa/exhaustive_scalar.pkl` and
+  `data/cfa/other_scales_exhaustive.pkl`.
