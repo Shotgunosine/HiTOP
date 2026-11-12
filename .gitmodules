@@ -1,0 +1,3 @@
+[submodule "paper"]
+	path = paper
+	url = git@github.com:NIMH-MLT/measurement_invariance_hitop_internalizing.git
